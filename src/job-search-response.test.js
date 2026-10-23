@@ -1,0 +1,6 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readJobSearchResponse} from './job-search-response.js';
+test('HTML compile errors are reported with status without leaking the response page',async()=>{const response=new Response('<html>private server stack and configuration</html>',{status:500,headers:{'Content-Type':'text/html'}});await assert.rejects(readJobSearchResponse(response),error=>error.message.includes('HTTP 500')&&!error.message.includes('private server stack')&&!error.message.includes('npm run dev'));});
+test('empty and genuine filtered job pages remain valid',async()=>{for(const result of [{jobs:[],total:0},{jobs:[{id:'genuine-requisition',title:'Test Automation Engineer'}],total:1}])assert.deepEqual(await readJobSearchResponse(Response.json(result)),result);});
+test('provider errors remain errors and malformed job envelopes are rejected',async()=>{await assert.rejects(readJobSearchResponse(Response.json({error:'The local job catalogue is unavailable.'},{status:503})),/catalogue is unavailable/);for(const result of [null,{jobs:[],total:-1},{jobs:[],total:1.2},{jobs:[{}],total:1}])await assert.rejects(readJobSearchResponse(Response.json(result)),/unexpected data format/);});

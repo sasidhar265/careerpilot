@@ -1,0 +1,5 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {professionalExperienceText,emptyProfessionalRole} from '../../src/lib/local-professional-experience.mjs';
+import {validatedDocument} from '../../src/lib/builder/documents.mjs';
+test('experience descriptions, duties and achievements become separate bullets without duplicate markers',async()=>{const source=professionalExperienceText([{...emptyProfessionalRole,jobTitle:'SDET',employer:'Example Ltd',dates:'2020 – Present',description:'Built C# frameworks.',responsibilities:'• Maintained API checks.\n- Investigated SQL data.',achievements:'1. Reduced verified execution time by 20%.'}]);assert.match(source,/^SDET\nExample Ltd \| 2020 – Present\n- Built C# frameworks\./);assert.match(source,/- Maintained API checks\.\n- Investigated SQL data\.\n- Reduced verified execution time by 20%\./);assert.ok(!source.includes('- •'));const document=await validatedDocument('Alex Example\nalex@example.test\nPROFESSIONAL EXPERIENCE\n'+source,'pdf','executive-uk');assert.equal(document.validation.status,'EXACT_TEXT');});

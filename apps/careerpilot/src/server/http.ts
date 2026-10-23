@@ -1,0 +1,10 @@
+import 'server-only';
+import {privateJson} from '@/lib/http-response';
+import {z} from 'zod';
+import {appUrl} from './config';
+import {authorizedRequestOrigin} from '@legacy/src/request-origin.js';
+export class HttpError extends Error{constructor(public status:number,message:string){super(message);}}
+export function assertOrigin(request:Request){const configured=appUrl().origin,origin=authorizedRequestOrigin(request,configured,{allowLocalAliases:process.env.NODE_ENV!=='production'&&process.env.AUTH_MODE==='file'});if(!origin)throw new HttpError(403,'Request origin is not allowed. Open '+configured+' and try again.');return origin;}
+export async function boundedBody(request:Request,max=150000){const reader=request.body?.getReader();if(!reader)throw new HttpError(400,'Request body is required.');const parts:Uint8Array[]=[];let size=0;try{for(;;){const {value,done}=await reader.read();if(done)break;size+=value.byteLength;if(size>max){await reader.cancel();throw new HttpError(413,'Request is too large.');}parts.push(value);}}finally{reader.releaseLock();}return Buffer.concat(parts);}
+export async function validatedJson<T>(request:Request,schema:z.ZodType<T>,max=150000){assertOrigin(request);if(!request.headers.get('content-type')?.startsWith('application/json'))throw new HttpError(415,'Expected JSON.');let value;try{value=JSON.parse((await boundedBody(request,max)).toString('utf8'));}catch(error){if(error instanceof HttpError)throw error;throw new HttpError(400,'Invalid JSON.');}return schema.parse(value);}
+export async function route(action:()=>Promise<Response>){try{const response=await action();response.headers.set('Cache-Control','private, no-store');return response;}catch(error){if(error instanceof z.ZodError)return privateJson({error:'Please check the supplied fields.',fields:error.flatten().fieldErrors},400);if(error instanceof HttpError)return privateJson({error:error.message},error.status);return privateJson({error:'The service could not complete this request. Check configuration or retry.'},503);}}

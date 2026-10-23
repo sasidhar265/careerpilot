@@ -1,0 +1,8 @@
+import {defineConfig,devices} from '@playwright/test';
+import {randomBytes} from 'node:crypto';
+import {fileURLToPath} from 'node:url';
+const database=process.env.E2E_DATABASE_URL,fixtures=process.env.E2E_PROVIDER_FIXTURES==='1';
+if(fixtures&&!database)throw Error('Isolated provider fixtures require E2E_DATABASE_URL.');
+const fixtureEnvironment=fixtures?{CAREERPILOT_E2E_PROVIDER_FIXTURES:'1',NODE_OPTIONS:(process.env.NODE_OPTIONS?process.env.NODE_OPTIONS+' ':'')+'--import='+JSON.stringify(fileURLToPath(new URL('./tests/support/provider-fixtures.mjs',import.meta.url))),AUTH_ISSUER:'https://identity.careerpilot.test',AUTH_CLIENT_ID:'careerpilot-e2e-client',AUTH_CLIENT_SECRET:'e2e-only-placeholder',AI_PROVIDER:'openai',OPENAI_API_KEY:'e2e-only-placeholder',DOCUMENT_ENCRYPTION_KEYS:JSON.stringify({e2e:randomBytes(32).toString('base64')}),DOCUMENT_ACTIVE_KEY_ID:'e2e',JOB_EMPLOYER_BOARDS:'[]'}:{};
+if(database&&!new URL(database).pathname.endsWith('_test'))throw new Error('E2E_DATABASE_URL must use a dedicated database ending in _test.');
+export default defineConfig({testDir:'./tests/e2e',fullyParallel:false,workers:1,retries:process.env.CI?1:0,reporter:'list',timeout:120000,expect:{timeout:15000},use:{baseURL:'http://localhost:3101',trace:'retain-on-failure'},projects:[{name:'chromium',use:{...devices['Desktop Chrome']}}],webServer:{command:'node node_modules/next/dist/bin/next dev --port 3101',url:'http://localhost:3101',reuseExistingServer:false,timeout:120000,env:{AUTH_MODE:'oidc',APP_URL:'http://localhost:3101',AUTH_SECRET:randomBytes(48).toString('base64url'),...(database?{DATABASE_URL:database}:{}),...fixtureEnvironment}}});

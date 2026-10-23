@@ -1,0 +1,1 @@
+export function profileOverlap(skills:string[],job:{title:string;description:string}){const text=(job.title+' '+job.description).toLowerCase();const matches=[...new Set(skills.map(skill=>skill.trim()).filter(Boolean))].filter(skill=>text.includes(skill.toLowerCase()));return {matches,matched:matches.length};}

@@ -1,0 +1,2 @@
+import {defineConfig,devices} from '@playwright/test';
+export default defineConfig({testDir:'./tests/guest-e2e',workers:1,retries:0,timeout:60000,globalSetup:'./tests/support/build-guest.mjs',use:{baseURL:'http://localhost:3103',trace:'retain-on-failure'},projects:[{name:'chromium',use:{...devices['Desktop Chrome']}}],webServer:{command:'node node_modules/next/dist/bin/next dev --hostname 127.0.0.1 --port 3103',url:'http://localhost:3103',reuseExistingServer:false,timeout:120000,env:{APP_URL:'http://localhost:3103',AUTH_MODE:'file',DATABASE_URL:''}}});

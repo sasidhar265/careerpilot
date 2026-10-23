@@ -1,0 +1,4 @@
+'use client';
+import {useState} from 'react';
+import {useRouter} from 'next/navigation';
+export function RemoveSavedJob({id}:{id:string}){const [busy,setBusy]=useState(false),[error,setError]=useState('');const router=useRouter();async function remove(){setBusy(true);setError('');try{const response=await fetch('/api/applications/'+id,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({hidden:true})});const result=await response.json();if(!response.ok)throw Error(result.error||'Unable to remove.');router.refresh();}catch(error){setError(error instanceof Error?error.message:'Unable to remove.');}finally{setBusy(false);}}return <div className="mt-2 px-2"><button disabled={busy} onClick={remove} className="min-h-10 text-xs text-muted-foreground underline">{busy?'Removing…':'Remove from saved jobs'}</button>{error&&<p role="alert" className="error">{error}</p>}</div>;}

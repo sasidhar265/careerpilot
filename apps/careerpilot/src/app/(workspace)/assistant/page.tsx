@@ -1,0 +1,6 @@
+import {requirePageUser} from '@/server/auth/session';
+import {db} from '@/server/db/client';
+import {PageHeading} from '@/components/page-heading';
+import {Card} from '@/components/ui/card';
+import {CareerAssistant} from '@/components/career-assistant';
+export default async function Assistant(){const user=await requirePageUser(),conversations=await db().conversation.findMany({where:{userId:user.id},include:{messages:{orderBy:{createdAt:'asc'}}},orderBy:{createdAt:'desc'},take:10});return <><PageHeading eyebrow="Career assistant" title="Think through your next step." description="Ask for advice grounded in your saved master resume. Provider access and account request limits apply."/><div className="grid gap-7 xl:grid-cols-[1.4fr_1fr]"><Card><CareerAssistant/></Card><Card><h2>Your previous conversations</h2>{conversations.length?conversations.map(conversation=><details key={conversation.id} className="mt-5"><summary className="cursor-pointer text-sm font-semibold">{conversation.title}</summary>{conversation.messages.map(message=><div key={message.id} className="mt-4"><p className="eyebrow">{message.role}</p><p className="whitespace-pre-wrap text-sm leading-7">{message.text}</p></div>)}</details>):<p className="muted mt-4">Your account’s saved conversations will appear here.</p>}</Card></div></>;}

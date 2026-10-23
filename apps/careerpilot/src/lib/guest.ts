@@ -1,0 +1,2 @@
+/** Guest runs inside this application; never rely on a second localhost server. */
+export function localGuestUrl(env:Record<string,string|undefined>){if(env.NODE_ENV==='production')return null;try{const app=new URL(env.APP_URL||'http://localhost:3100');if(!['localhost','127.0.0.1','[::1]'].includes(app.hostname)||!['http:','https:'].includes(app.protocol)||app.username||app.password||app.pathname!=='/'||app.search||app.hash)return null;return '/guest';}catch{return null;}}

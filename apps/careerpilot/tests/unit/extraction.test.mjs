@@ -1,0 +1,12 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import JSZip from 'jszip';
+import {createPdf,createDocx} from '../../../../src/resume-export.js';
+import {validateUpload,extractInWorker,MAX_FILE_BYTES} from '../../src/lib/profile/extraction.mjs';
+const text='Taylor Example\ntaylor@example.org\n\nPROFESSIONAL SUMMARY\nSoftware engineer building reliable automated systems.\n\nSKILLS\nTypeScript, Playwright';
+test('real PDF and DOCX round trips extract readable resume text',async()=>{for(const [name,bytes] of [['resume.pdf',Buffer.from(createPdf(text).output('arraybuffer'))],['resume.docx',Buffer.from(await (await createDocx(text)).arrayBuffer())]]){const result=await extractInWorker(bytes,name);assert.match(result.text,/Taylor Example/);assert.match(result.text,/Playwright/);assert.ok(result.text.length>50);if(name.endsWith('.pdf'))assert.ok(result.pages.length);}});
+test('server validation rejects disguised, empty and oversized files',()=>{assert.throws(()=>validateUpload(Buffer.from('malware'),'resume.pdf'));assert.throws(()=>validateUpload(Buffer.alloc(0),'resume.docx'));assert.throws(()=>validateUpload(Buffer.alloc(MAX_FILE_BYTES+1),'resume.pdf'));assert.throws(()=>validateUpload(Buffer.from('%PDF-1.7'),'resume.pdf','text/html'));});
+test('malformed PDF and unsafe DOCX containers fail safely',async()=>{await assert.rejects(extractInWorker(Buffer.from('%PDF-1.7\ninvalid'),'resume.pdf'));const zip=new JSZip();zip.file('../outside','unsafe');zip.file('word/document.xml','<x/>');zip.file('[Content_Types].xml','<x/>');zip.file('_rels/.rels','<x/>');await assert.rejects(extractInWorker(await zip.generateAsync({type:'nodebuffer'}),'resume.docx'));});
+test('image-only or nearly empty PDF retains explicit extraction diagnostics',async()=>{const result=await extractInWorker(Buffer.from(createPdf('Taylor').output('arraybuffer')),'short.pdf');assert.equal(result.status,'NEEDS_TEXT');assert.ok(result.diagnostics.some(d=>d.code==='NEEDS_TEXT'));});
+
+test('UTF-16 XML cannot bypass DOCX declaration checks',async()=>{const zip=new JSZip();zip.file('[Content_Types].xml','<Types/>');zip.file('_rels/.rels','<Relationships/>');zip.file('word/document.xml',Buffer.concat([Buffer.from([0xff,0xfe]),Buffer.from('<?xml version="1.0" encoding="UTF-16"?><!DOCTYPE x [<!ENTITY secret SYSTEM "file:///private/untrusted">]><x>&secret;</x>','utf16le')]));await assert.rejects(extractInWorker(await zip.generateAsync({type:'nodebuffer'}),'unsafe.docx'),error=>error.code==='UNSUPPORTED_XML_ENCODING');});

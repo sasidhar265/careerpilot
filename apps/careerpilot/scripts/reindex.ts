@@ -1,0 +1,5 @@
+import 'dotenv/config';
+import {db} from '../src/server/db/client';
+import {canonicalJobUrl,duplicateFingerprint} from '../src/lib/jobs/identity';
+let cursor:string|undefined,updated=0,duplicates=0,invalid=0;
+try{for(;;){const jobs=await db().job.findMany({where:{canonicalUrl:null,duplicateOfId:null},include:{employer:true},orderBy:{id:'asc'},take:100,...(cursor?{cursor:{id:cursor},skip:1}:{})});if(!jobs.length)break;for(const job of jobs){cursor=job.id;let canonical;try{canonical=canonicalJobUrl(job.url);}catch{invalid++;continue;}await db().$transaction(async tx=>{await tx.$queryRawUnsafe('SELECT pg_advisory_xact_lock(hashtextextended($1,0))',canonical);const existing=await tx.job.findUnique({where:{canonicalUrl:canonical}}),duplicateOfId=existing&&existing.id!==job.id?existing.id:null;await tx.job.update({where:{id:job.id},data:{canonicalUrl:duplicateOfId?null:canonical,duplicateOfId,duplicateFingerprint:duplicateFingerprint(job.employer.name,job.title,job.location)}});if(duplicateOfId)duplicates++;else updated++;});}}console.log(JSON.stringify({updated,duplicates,invalid,verificationUnchanged:true}));}finally{await db().$disconnect();}

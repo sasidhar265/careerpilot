@@ -1,0 +1,4 @@
+import {createHash} from 'node:crypto';
+import {safeHttpUrl} from '../urls.ts';
+export function canonicalJobUrl(value:string){const safe=safeHttpUrl(value);if(!safe)throw Error('Invalid public job URL.');const url=new URL(safe);url.hash='';url.hostname=url.hostname.toLowerCase();for(const key of [...url.searchParams.keys()])if(/^(utm_.+|gclid|fbclid|lever-source|lever-origin|gh_src)$/i.test(key))url.searchParams.delete(key);url.searchParams.sort();url.pathname=url.pathname.replace(/\/+$/,'')||'/';if(url.href.length>2000)throw Error('Job URL is too long.');return url.href;}
+export function duplicateFingerprint(company:string,title:string,location:string){const normalize=(value:string)=>value.normalize('NFKC').toLowerCase().replace(/[^\p{L}\p{N}]+/gu,' ').trim();return createHash('sha256').update([company,title,location].map(normalize).join('|')).digest('hex');}

@@ -1,0 +1,11 @@
+'use client';
+import Link from 'next/link';
+import {useEffect,useId,useRef,useState} from 'react';
+import {UserAvatar} from './user-avatar';
+import {ChevronDown,Settings,LogOut} from 'lucide-react';
+import styles from './account-menu.module.css';
+/** Mounted only by authenticated account/workspace pages, never by guest entry. */
+export function AccountMenu({name,email,local=false}:{name:string;email?:string|null;local?:boolean}){const [open,setOpen]=useState(false),menu=useRef<HTMLDivElement>(null),trigger=useRef<HTMLButtonElement>(null),id=useId(),profileHref=local?'/local-account#profile':'/profile',accountHref=local?'/local-account':'/settings#account';
+useEffect(()=>{if(!open)return;function dismiss(event:PointerEvent){if(event.target instanceof Node&&!menu.current?.contains(event.target))setOpen(false);}document.addEventListener('pointerdown',dismiss);return()=>document.removeEventListener('pointerdown',dismiss);},[open]);
+function close(){setOpen(false);}
+return <div className={styles.controls} data-account-controls><div ref={menu} className={styles.menu} onKeyDown={event=>{if(event.key==='Escape'){event.preventDefault();close();trigger.current?.focus();}}} onBlur={event=>{if(event.relatedTarget instanceof Node&&!event.currentTarget.contains(event.relatedTarget))close();}}><button ref={trigger} type="button" className={styles.trigger} aria-label="Account" aria-expanded={open} aria-controls={id} title="Account" onClick={()=>setOpen(value=>!value)}><UserAvatar name={name}/><span className={styles.name}>{name}</span><ChevronDown size={14} className={styles.chevron} aria-hidden="true"/></button>{open&&<div id={id} className={styles.popover}><div className={styles.identity}><UserAvatar name={name} size="profile"/><div className={styles.identityText}><p>{name}</p>{email&&<small>{email}</small>}</div></div><nav className={styles.options} aria-label="Account options"><Link href={profileHref} onClick={close}><UserAvatar name={name} size="menu"/>Profile</Link><Link href={accountHref} onClick={close}><Settings size={17} aria-hidden="true"/>Account settings</Link><form method="post" action={local?'/api/auth/local/logout':'/api/auth/logout'}><button type="submit"><LogOut size={17} aria-hidden="true"/>Sign out</button></form></nav></div>}</div></div>;}

@@ -1,0 +1,55 @@
+{
+  "readable": true,
+  "pages": [
+    {
+      "page": 1,
+      "characters": 29,
+      "requiresOcr": false
+    },
+    {
+      "page": 2,
+      "characters": 2462,
+      "requiresOcr": false
+    },
+    {
+      "page": 3,
+      "characters": 2861,
+      "requiresOcr": false
+    },
+    {
+      "page": 4,
+      "characters": 3172,
+      "requiresOcr": false
+    },
+    {
+      "page": 5,
+      "characters": 1116,
+      "requiresOcr": false
+    },
+    {
+      "page": 6,
+      "characters": 2260,
+      "requiresOcr": false
+    },
+    {
+      "page": 7,
+      "characters": 1384,
+      "requiresOcr": false
+    },
+    {
+      "page": 8,
+      "characters": 1178,
+      "requiresOcr": false
+    },
+    {
+      "page": 9,
+      "characters": 2764,
+      "requiresOcr": false
+    },
+    {
+      "page": 10,
+      "characters": 2768,
+      "requiresOcr": false
+    }
+  ]
+}

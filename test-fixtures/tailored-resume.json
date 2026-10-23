@@ -1,0 +1,29 @@
+{
+  "name": "ALEX EXAMPLE",
+  "contact": ["London, UK", "alex.example@example.com", "+44 7700 900123"],
+  "summary": "Test analyst with three years of experience in software quality assurance. Experienced in SQL validation, user acceptance testing, regression testing, and defect investigation. Collaborates with developers and business users to clarify requirements and support reliable releases.",
+  "skills": ["Test planning", "SQL", "User acceptance testing (UAT)", "Regression testing", "Defect management", "Agile"],
+  "experience": [
+    {
+      "title": "Test Analyst",
+      "organization": "Example Software Ltd",
+      "location": "London",
+      "dates": "2022–Present",
+      "bullets": [
+        "Designed and executed test scripts from business requirements, documenting expected results and maintaining traceability through release cycles.",
+        "Used SQL queries to validate application data and investigate discrepancies during user acceptance testing.",
+        "Logged reproducible defects, worked with developers to clarify root causes, and retested fixes before release.",
+        "Maintained regression test packs and reduced repeated defects by 20% through targeted release checks."
+      ]
+    },
+    {
+      "title": "Junior Tester",
+      "organization": "Example Digital Ltd",
+      "location": "London",
+      "dates": "2020–2022",
+      "bullets": ["Executed functional tests and documented findings for the development team."]
+    }
+  ],
+  "education": [{"qualification": "BSc Computer Science", "institution": "Example University", "dates": "2020", "details": []}],
+  "additionalSections": [{"heading": "Certifications", "items": ["ISTQB Foundation Certificate in Software Testing | 2021"]}]
+}

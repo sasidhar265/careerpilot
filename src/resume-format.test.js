@@ -1,0 +1,13 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';import {resumeToText,parseResume} from './resume-format.js';import {prepare,finalizeResult} from '../server/ai.js';
+const resume=JSON.parse(readFileSync(new URL('../test-fixtures/tailored-resume.json',import.meta.url),'utf8'));
+test('full resume contains traditional sections, complete history, and no empty sections',()=>{const text=resumeToText(resume);for(const h of ['PROFESSIONAL SUMMARY','CORE SKILLS','PROFESSIONAL EXPERIENCE','EDUCATION','CERTIFICATIONS'])assert.ok(text.includes(h));assert.ok(text.includes('Example Software Ltd | London | 2022–Present'));assert.ok(text.includes('Junior Tester'));assert.ok(!text.includes('undefined'));const blocks=parseResume(text);assert.equal(blocks[0].type,'name');assert.equal(blocks.filter(b=>b.type==='entry').length,3);assert.equal(blocks.filter(b=>b.type==='bullet').length,6);});
+test('rebuilding an entire resume is requested even with no selected priorities',()=>{const text=resumeToText(resume);const job={title:'Test Analyst',keywords:['SQL'],requirements:['Testing'],responsibilities:['UAT']};const task=prepare('rewrite',{jobDescription:'Test Analyst needed to create test scripts, perform UAT, query SQL and manage software defects.',job,resume:text,suggestions:[]});assert.match(task.instructions,/COMPLETE/);assert.match(task.instructions,/even when the selected list is empty/);const result=finalizeResult('rewrite',{}, {resume:structuredClone(resume),reviewNotes:['Confirm healthcare experience.']},'test');assert.ok(result.updatedResume.includes('20%'));assert.ok(!result.updatedResume.includes('Confirm healthcare'));assert.equal(result.reviewNotes.length,1);assert.throws(()=>finalizeResult('rewrite',{}, {resume:{name:'Alex'},reviewNotes:[]},'test'),/invalid full resume/);});
+test('skills paragraphs and existing bullets become compact bullet rows without changing other sections',()=>{
+ const blocks=parseResume('Alex Example\n\nCore Skills\nSQL | Testing | Agile\n\nOther Technical Skills:\n- JavaScript\n- Python\nTools: Git, Docker\n\nPROFESSIONAL SUMMARY\nExperienced in testing, delivery, and collaboration.');
+ const skills=blocks.filter(b=>b.type==='skills');
+ assert.deepEqual(skills.map(b=>b.items),[['SQL','Testing','Agile'],['JavaScript','Python','Tools: Git, Docker']]);
+ assert.equal(skills[0].text,'• SQL  • Testing  • Agile');
+ assert.equal(blocks.at(-1).type,'paragraph');
+ assert.deepEqual(parseResume('Alex\n\nTECHNICAL SKILLS\nSQL, Testing (manual, automated), Agile').at(-1).items,['SQL','Testing (manual, automated)','Agile']);
+ assert.match(resumeToText(resume),/CORE SKILLS\n• Test planning  • SQL/);
+});

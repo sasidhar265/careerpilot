@@ -1,0 +1,8 @@
+import {profileUpdateSchema} from '@/lib/local-resume-profile.mjs';
+import {cookies} from 'next/headers';
+import {fileAuthEnabled,localAuth} from '@/server/auth/local';
+import {sessionCookieName} from '@/server/auth/cookies';
+import {HttpError,route,validatedJson} from '@/server/http';
+const failures:Record<string,{status:number;message:string}>={UNAUTHORIZED:{status:401,message:'Sign in again to edit your profile.'},INVALID_FIELDS:{status:400,message:'Enter a valid name and email address.'},PASSWORD_REQUIRED:{status:400,message:'Enter your current password to change your sign-in email.'},INVALID_CREDENTIALS:{status:400,message:'Your current password is incorrect.'},ACCOUNT_EXISTS:{status:409,message:'This email address is already used by another account.'},CONFLICT:{status:409,message:'Your profile changed in another tab. Cancel to load the latest details, then try again.'},RATE_LIMITED:{status:429,message:'Too many password attempts. Wait 15 minutes before trying again.'}};
+export const runtime='nodejs';
+export async function PATCH(request:Request){return route(async()=>{if(!fileAuthEnabled())throw new HttpError(404,'Local profile editing is unavailable.');const fields=await validatedJson(request,profileUpdateSchema,524288),token=(await cookies()).get(sessionCookieName())?.value;try{const user=await localAuth().updateProfile(token,fields);return Response.json({profile:{name:user.name,email:user.email,resumeProfile:user.resumeProfile},message:'Profile updated.'});}catch(error){const failure=error instanceof Error?failures[error.message]:undefined;if(failure)throw new HttpError(failure.status,failure.message);throw error;}});}

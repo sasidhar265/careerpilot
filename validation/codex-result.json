@@ -1,0 +1,4 @@
+{
+  "status": 502,
+  "error": "Codex CLI could not complete the request. Run codex login status and check your login, network, model access, and usage limits."
+}

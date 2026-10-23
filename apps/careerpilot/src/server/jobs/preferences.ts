@@ -1,0 +1,11 @@
+import 'server-only';
+import {bookmarkOnlyStatuses} from '@/lib/tracker';
+import {saveApplication} from '@/server/tracker/service';
+import {db} from '@/server/db/client';
+import {HttpError} from '@/server/http';
+import {z} from 'zod';
+import {parseFilters,filterQuery,SearchValidationError} from '@/lib/jobs/query';
+export const savedSearchInput=z.object({name:z.string().trim().min(1).max(80),queryString:z.string().max(8000)}).strict();
+export const preferenceInput=z.object({saved:z.boolean().optional(),hidden:z.boolean().optional(),collection:z.string().trim().max(80).optional()}).strict().refine(value=>Object.keys(value).length>0,'Provide a preference.');
+export async function saveSearch(userId:string,input:z.infer<typeof savedSearchInput>){let queryString;try{queryString=filterQuery(parseFilters(Object.fromEntries(new URLSearchParams(input.queryString))),false);}catch(error){if(error instanceof SearchValidationError)throw new HttpError(400,error.message);throw error;}return db().$transaction(async tx=>{await tx.$queryRawUnsafe('SELECT id FROM "User" WHERE id=$1 FOR UPDATE',userId);const existing=await tx.savedSearch.findUnique({where:{userId_name:{userId,name:input.name}}});if(!existing&&await tx.savedSearch.count({where:{userId}})>=50)throw new HttpError(422,'You can keep up to 50 saved searches. Delete an old search first.');return tx.savedSearch.upsert({where:{userId_name:{userId,name:input.name}},create:{userId,name:input.name,queryString},update:{queryString}});});}
+export async function jobPreference(userId:string,jobId:string,input:z.infer<typeof preferenceInput>){return db().$transaction(async tx=>{await tx.$queryRawUnsafe('SELECT id FROM "User" WHERE id=$1 FOR UPDATE',userId);if(!await tx.job.findUnique({where:{id:jobId},select:{id:true}}))throw new HttpError(404,'Job not found.');const preference=await tx.savedJob.upsert({where:{userId_jobId:{userId,jobId}},create:{userId,jobId,...input},update:input});if(input.saved===true)await saveApplication(userId,{jobId,status:'SAVED',location:'',officialUrl:''},tx);else if(input.saved===false)await tx.application.updateMany({where:{userId,jobId,status:{in:[...bookmarkOnlyStatuses]}},data:{hidden:true,revision:{increment:1}}});return preference;});}

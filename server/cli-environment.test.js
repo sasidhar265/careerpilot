@@ -1,0 +1,4 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {cliEnvironment} from './cli-environment.js';
+test('CLI AI children cannot inherit application database, auth or private document secrets',()=>{const original={PATH:'/test/path',HOME:'/test/home',GITHUB_TOKEN:'fixture-provider-login',DATABASE_URL:'fixture-private-db',AUTH_SECRET:'fixture-secret',AUTH_CLIENT_SECRET:'fixture-client-secret',DOCUMENT_ENCRYPTION_KEYS:'fixture-keyring',POSTGRES_PASSWORD:'fixture-password',E2E_DATABASE_URL:'fixture-test-db',INTEGRATION_DATABASE_URL:'fixture-integration-db',OPENAI_API_KEY:'fixture-api-key',CODEX_API_KEY:'fixture-api-key',COPILOT_ALLOW_ALL:'true'};const child=cliEnvironment(original);assert.deepEqual(child,{PATH:'/test/path',HOME:'/test/home',GITHUB_TOKEN:'fixture-provider-login'});assert.equal(original.AUTH_SECRET,'fixture-secret');});

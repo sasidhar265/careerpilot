@@ -1,0 +1,8 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {privateJson} from '../../src/lib/http-response.ts';
+test('private errors are JSON, uncacheable and protected from MIME sniffing',async()=>{for(const status of [400,401,403,404,409,422,429,503]){const response=privateJson({error:'Sanitized failure'},status);assert.equal(response.status,status);assert.equal(response.headers.get('Cache-Control'),'private, no-store');assert.equal(response.headers.get('X-Content-Type-Options'),'nosniff');assert.deepEqual(await response.json(),{error:'Sanitized failure'});}});
+import {authCookieNames} from '../../src/lib/security.ts';
+test('production session and OIDC attempt cookies both use host-only browser prefixes',()=>{assert.deepEqual(authCookieNames('https://career.example.org'),{session:'__Host-careerpilot_session',attempt:'__Host-careerpilot_oidc'});assert.deepEqual(authCookieNames('http://localhost:3100'),{session:'careerpilot_session',attempt:'careerpilot_oidc'});});
+import {applicationOrigin} from '../../src/lib/urls.ts';
+test('runtime origin rejects credential leaks, unexpected protocols and path/query confusion',()=>{for(const origin of ['javascript:alert(1)','ftp://career.example.org','https://user:PRIVATE_VALUE@career.example.org','https://career.example.org/subpath','https://career.example.org?private=1','https://career.example.org#fragment'])assert.throws(()=>applicationOrigin(origin));assert.throws(()=>applicationOrigin('http://career.example.org',true));assert.equal(applicationOrigin('http://localhost:3100',true).origin,'http://localhost:3100');assert.equal(applicationOrigin('https://career.example.org',true).origin,'https://career.example.org');});

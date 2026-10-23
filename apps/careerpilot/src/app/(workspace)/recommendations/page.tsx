@@ -1,0 +1,8 @@
+import Link from 'next/link';
+import {requirePageUser} from '@/server/auth/session';
+import {db} from '@/server/db/client';
+import {profileOverlap} from '@/lib/recommendations';
+import {PageHeading} from '@/components/page-heading';
+import {Card} from '@/components/ui/card';
+import {JobCard} from '@/components/job-card';
+export default async function Recommendations(){const user=await requirePageUser(),[profile,jobs]=await Promise.all([db().candidateProfile.findUnique({where:{userId:user.id}}),db().job.findMany({where:{duplicateOfId:null,potentiallyExpiredAt:null,OR:[{closingAt:null},{closingAt:{gte:new Date()}}]},include:{employer:true},orderBy:{lastSeenAt:'desc'},take:300})]);const ranked=jobs.map(job=>({job,...profileOverlap(profile?.skills||[],job)})).filter(item=>item.matched>0).sort((a,b)=>b.matched-a.matched).slice(0,20);return <><PageHeading eyebrow="Your recommendations" title="Start with relevant opportunities." description="These initial suggestions use transparent skill overlap across the latest 300 collected jobs. Open a role to request an AI evidence review; overlap is not a hiring score."/>{!profile?.skills.length&&<Card><p>Add verified skills to your <Link className="text-link" href="/profile">profile</Link> to get initial matches.</p></Card>}<div className="grid gap-6 xl:grid-cols-2">{ranked.map(item=><div key={item.job.id}><p className="muted mb-3">Shared terms: {item.matches.join(', ')}</p><JobCard job={item.job}/></div>)}</div>{profile?.skills.length&&!ranked.length?<Card><p>No skill overlap in the currently collected jobs. Try updating your profile or explore <Link href="/jobs" className="text-link">all openings</Link>.</p></Card>:null}</>;}

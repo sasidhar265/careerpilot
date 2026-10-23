@@ -1,0 +1,4 @@
+/** Built-in anonymous assets use a dedicated same-origin API namespace. */
+export function applicationApiPath(path,base='/'){return base==='/guest-assets/'&&typeof path==='string'&&path.startsWith('/api/')?'/api/guest/'+path.slice(5):path;}
+export async function redirectSignedInResponse(response,navigate){if(response.status===403){let value;try{value=await response.clone().json();}catch{return response;}if(value?.redirectTo==='/local-account'||value?.redirectTo==='/dashboard')navigate(value.redirectTo);}return response;}
+export async function applicationFetch(path,options){const base=import.meta.env?.BASE_URL||'/',response=await fetch(applicationApiPath(path,base),options);return base==='/guest-assets/'&&typeof window!=='undefined'?redirectSignedInResponse(response,target=>window.location.replace(target)):response;}

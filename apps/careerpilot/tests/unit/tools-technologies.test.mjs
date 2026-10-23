@@ -1,0 +1,6 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {importResumeText} from '../../src/lib/local-resume-import.mjs';
+import {emptyResumeProfile,resumeProfileSchema} from '../../src/lib/local-resume-profile.mjs';
+test('tools and technologies import separately from skills and experience',()=>{for(const heading of ['Tools & Technologies','Tools and Technologies','TOOLS/TECHNOLOGIES']){const result=importResumeText(`CV\nTECHNICAL SKILLS\nTest design\n${heading}\nNUnit, Azure DevOps, C#\nPROFESSIONAL EXPERIENCE\nSDET at Example Ltd\n2020 – Present\nBuilt regression checks.`);const tools=result.proposals.find(item=>item.field==='toolsTechnologies');assert.equal(tools.label,'Tools & Technologies');assert.equal(tools.value,'NUnit, Azure DevOps, C#');assert.equal(result.proposals.find(item=>item.field==='skills').value,'Test design');assert.ok(!result.proposals.find(item=>item.roles).roles[0].sourceText.includes('NUnit'));}});
+test('existing profiles default tools to empty and field limits remain enforced',()=>{const {toolsTechnologies,...old}=emptyResumeProfile;assert.equal(toolsTechnologies,'');assert.equal(resumeProfileSchema.parse(old).toolsTechnologies,'');assert.equal(resumeProfileSchema.safeParse({...old,toolsTechnologies:'x'.repeat(3001)}).success,false);});

@@ -1,0 +1,462 @@
+generator client {
+  provider = "prisma-client"
+  output = "../src/generated/prisma"
+}
+datasource db {
+  provider = "postgresql"
+}
+enum ResumeKind {
+  MASTER
+  TAILORED
+}
+enum ApplicationStatus {
+  DISCOVERED
+  PREPARING
+  SCREENING
+  ACCEPTED
+  SAVED
+  APPLIED
+  INTERVIEW
+  OFFER
+  REJECTED
+  WITHDRAWN
+}
+enum RunStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+}
+model User {
+  id String @id @default(cuid())
+  email String? @unique
+  name String?
+  createdAt DateTime @default(now())
+  identities Identity[]
+  sessions Session[]
+  profile CandidateProfile?
+  resumes Resume[]
+  documents Document[]
+  applications Application[]
+  conversations Conversation[]
+  aiRuns AiRun[]
+  usage UsageCounter[]
+  savedSearches SavedSearch[]
+  savedJobs SavedJob[]
+  baselines ResumeBaseline[]
+  profileVersions ProfileVersion[]
+  jdVersions JobDescriptionVersion[]
+  matchAnalyses MatchAnalysis[]
+  builderSessions BuilderSession[]
+}
+model Identity {
+  id String @id @default(cuid())
+  issuer String
+  subject String
+  userId String
+  user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+  @@unique([issuer,subject])
+  @@index([userId])
+}
+model Session {
+  id String @id @default(cuid())
+  tokenHash String @unique
+  userId String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+  @@index([userId,expiresAt])
+}
+model CandidateProfile {
+  id String @id @default(cuid())
+  userId String @unique
+  headline String @default("")
+  location String @default("")
+  summary String @default("")
+  skills String[] @default([])
+  targetRoles String[] @default([])
+  workPreference String @default("")
+  updatedAt DateTime @updatedAt
+  activeBaselineId String?
+  activeVersionId String?
+  activeBaseline ResumeBaseline? @relation("ActiveBaseline",fields:[activeBaselineId],references:[id],onDelete:SetNull)
+  activeVersion ProfileVersion? @relation("ActiveProfileVersion",fields:[activeVersionId],references:[id],onDelete:SetNull)
+  user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+}
+model Document {
+  id String @id @default(cuid())
+  userId String
+  filename String
+  mediaType String
+  sha256 String
+  originalCiphertext Bytes?
+  originalKeyId String?
+  sizeBytes Int?
+  extractionDiagnostics Json?
+  pageMap Json?
+  coverLetters Application[] @relation("ApplicationCoverLetter")
+  baseline ResumeBaseline?
+  text String
+  createdAt DateTime @default(now())
+  user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+  @@index([userId,createdAt])
+}
+model Resume {
+  id String @id @default(cuid())
+  userId String
+  title String
+  kind ResumeKind @default(MASTER)
+  text String
+  jobId String?
+  createdAt DateTime @default(now())
+  user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+  job Job? @relation(fields:[jobId],references:[id],onDelete:SetNull)
+  applications Application[]
+  profileVersion ProfileVersion?
+  matchAnalyses MatchAnalysis[] @relation("AnalyzedResume")
+  tailoredMatches MatchAnalysis[] @relation("MatchTailoring")
+  builderVersion BuilderVersion?
+  @@index([userId,kind,createdAt])
+}
+model Employer {
+  id String @id @default(cuid())
+  name String
+  provider String
+  board String
+  region String @default("global")
+  careersUrl String
+  lastSuccessAt DateTime?
+  lastError String?
+  jobs Job[]
+  sources JobSource[]
+  industry String?
+  companySize String?
+  companyType String?
+  description String?
+  metadataSourceUrl String?
+  metadataVerifiedAt DateTime?
+  @@unique([provider,board,region])
+}
+model Job {
+  id String @id @default(cuid())
+  sourceKey String @unique
+  employerId String
+  title String
+  location String
+  description String
+  url String
+  source String
+  canonicalUrl String? @unique
+  applicationUrl String?
+  duplicateFingerprint String?
+  duplicateOfId String?
+  duplicateOf Job? @relation("JobDuplicates",fields:[duplicateOfId],references:[id],onDelete:SetNull)
+  duplicates Job[] @relation("JobDuplicates")
+  requirements String @default("")
+  benefits String @default("")
+  skills String[] @default([])
+  employmentType String?
+  seniority String?
+  experienceMinYears Float?
+  experienceMaxYears Float?
+  experienceEvidence String?
+  industry String?
+  department String?
+  visaSponsorship Boolean?
+  visaEvidence String?
+  visaVerifiedAt DateTime?
+  lastVerifiedAt DateTime?
+  potentiallyExpiredAt DateTime?
+  observations JobObservation[]
+  locations JobLocation[]
+  savedJobs SavedJob[]
+  contract String @default("")
+  workplace String @default("")
+  salaryMin Int?
+  salaryMax Int?
+  salaryEstimated Boolean @default(false)
+  publishedAt DateTime?
+  closingAt DateTime?
+  lastSeenAt DateTime @default(now())
+  firstSeenAt DateTime @default(now())
+  excerpt Boolean @default(true)
+  employer Employer @relation(fields:[employerId],references:[id],onDelete:Restrict)
+  applications Application[]
+  resumes Resume[]
+  @@index([duplicateFingerprint])
+  @@index([duplicateOfId])
+  @@index([lastVerifiedAt])
+  @@index([publishedAt])
+  @@index([salaryMax])
+  @@index([lastSeenAt])
+  @@index([employerId,publishedAt])
+}
+model Application {
+  id String @id @default(cuid())
+  userId String
+  jobId String?
+  employerName String @default("")
+  roleTitle String @default("")
+  location String @default("")
+  officialUrl String @default("")
+  duplicateKey String @default("")
+  revision Int @default(1)
+  status ApplicationStatus @default(SAVED)
+  hidden Boolean @default(false)
+  resumeId String?
+  reminderAt DateTime?
+  resume Resume? @relation(fields:[resumeId],references:[id],onDelete:SetNull)
+  notes String @default("")
+  preparationNotes String @default("")
+  recruiterName String @default("")
+  recruiterEmail String @default("")
+  recruiterPhone String @default("")
+  interviewStages Json @default("[]")
+  coverLetterDocumentId String?
+  coverLetter Document? @relation("ApplicationCoverLetter",fields:[coverLetterDocumentId],references:[id],onDelete:SetNull)
+  history ApplicationStatusEvent[]
+  interviewAt DateTime?
+  offerAt DateTime?
+  acceptedAt DateTime?
+  appliedAt DateTime?
+  closingAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+  job Job? @relation(fields:[jobId],references:[id],onDelete:SetNull)
+  @@index([resumeId])
+  @@unique([userId,jobId])
+  @@unique([userId,duplicateKey])
+  @@index([userId,status,updatedAt])
+}
+model ApplicationStatusEvent {
+  id String @id @default(cuid())
+  applicationId String
+  fromStatus ApplicationStatus?
+  toStatus ApplicationStatus
+  source String @default("USER")
+  recordedAt DateTime @default(now())
+  application Application @relation(fields:[applicationId],references:[id],onDelete:Cascade)
+  @@index([applicationId,recordedAt])
+}
+model Conversation {
+  id String @id @default(cuid())
+  userId String
+  title String
+  createdAt DateTime @default(now())
+  user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+  messages Message[]
+  @@index([userId,createdAt])
+}
+model Message {
+  id String @id @default(cuid())
+  conversationId String
+  role String
+  text String
+  evidence Json?
+  createdAt DateTime @default(now())
+  conversation Conversation @relation(fields:[conversationId],references:[id],onDelete:Cascade)
+  @@index([conversationId,createdAt])
+}
+model AiRun {
+  id String @id @default(cuid())
+  userId String
+  action String
+  provider String
+  inputHash String
+  status RunStatus @default(PENDING)
+  output Json?
+  createdAt DateTime @default(now())
+  user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+  @@index([userId,createdAt])
+}
+model UsageCounter {
+  userId String
+  bucket String
+  count Int @default(0)
+  user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+  @@id([userId,bucket])
+}
+
+model JobSource {
+  id String @id @default(cuid())
+  key String @unique
+  provider String
+  board String
+  region String @default("global")
+  employerId String
+  employer Employer @relation(fields:[employerId],references:[id],onDelete:Restrict)
+  enabled Boolean @default(true)
+  status String @default("UNVERIFIED")
+  lastAttemptAt DateTime?
+  lastSuccessAt DateTime?
+  lastCompleteAt DateTime?
+  lastErrorCode String?
+  collectionNote String?
+  failureCount Int @default(0)
+  nextRefreshAt DateTime @default(now())
+  leaseOwner String?
+  leaseUntil DateTime?
+  observations JobObservation[]
+  @@index([enabled,nextRefreshAt])
+}
+model JobObservation {
+  id String @id @default(cuid())
+  sourceId String
+  externalId String
+  jobId String
+  canonicalUrl String
+  applicationUrl String?
+  lastVerifiedAt DateTime
+  missingSince DateTime?
+  source JobSource @relation(fields:[sourceId],references:[id],onDelete:Restrict)
+  job Job @relation(fields:[jobId],references:[id],onDelete:Cascade)
+  @@unique([sourceId,externalId])
+  @@index([jobId,missingSince])
+}
+model JobLocation {
+  id String @id @default(cuid())
+  jobId String
+  label String
+  latitude Float
+  longitude Float
+  provenance String
+  job Job @relation(fields:[jobId],references:[id],onDelete:Cascade)
+  @@unique([jobId,label])
+  @@index([latitude,longitude])
+}
+model SavedSearch {
+  id String @id @default(cuid())
+  userId String
+  name String
+  queryString String
+  createdAt DateTime @default(now())
+  user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+  @@unique([userId,name])
+}
+model SavedJob {
+  id String @id @default(cuid())
+  userId String
+  jobId String
+  saved Boolean @default(false)
+  hidden Boolean @default(false)
+  collection String @default("")
+  updatedAt DateTime @updatedAt
+  user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+  job Job @relation(fields:[jobId],references:[id],onDelete:Cascade)
+  @@unique([userId,jobId])
+  @@index([userId,saved,collection])
+}
+
+model ResumeBaseline {
+  id String @id @default(cuid())
+  userId String
+  documentId String @unique
+  title String
+  revision Int @default(1)
+  createdAt DateTime @default(now())
+  user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+  document Document @relation(fields:[documentId],references:[id],onDelete:Restrict)
+  versions ProfileVersion[]
+  activeFor CandidateProfile[] @relation("ActiveBaseline")
+  @@index([userId,createdAt])
+}
+model ProfileVersion {
+  id String @id @default(cuid())
+  userId String
+  baselineId String?
+  revision Int
+  parentId String?
+  parent ProfileVersion? @relation("ProfileVersionHistory",fields:[parentId],references:[id],onDelete:SetNull)
+  children ProfileVersion[] @relation("ProfileVersionHistory")
+  matchAnalyses MatchAnalysis[]
+  builderSessions BuilderSession[]
+  data Json
+  transcription String?
+  preferences Json?
+  diagnostics Json
+  method String
+  status String @default("DRAFT")
+  reviewedAt DateTime?
+  resumeId String? @unique
+  resume Resume? @relation(fields:[resumeId],references:[id],onDelete:SetNull)
+  createdAt DateTime @default(now())
+  user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+  baseline ResumeBaseline? @relation(fields:[baselineId],references:[id],onDelete:Restrict)
+  activeFor CandidateProfile[] @relation("ActiveProfileVersion")
+  @@unique([baselineId,revision])
+  @@index([userId,createdAt])
+}
+
+model JobDescriptionVersion {
+  id String @id @default(cuid())
+  userId String
+  text String
+  sha256 String
+  sourceUrl String?
+  sourceJobId String?
+  analysis Json
+  createdAt DateTime @default(now())
+  user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+  matches MatchAnalysis[]
+  @@index([userId,createdAt])
+}
+model MatchAnalysis {
+  id String @id @default(cuid())
+  userId String
+  resumeId String
+  profileVersionId String
+  jdVersionId String
+  resumeSha256 String
+  profileSha256 String
+  report Json
+  builderSessions BuilderSession[]
+  requirementsReviewedAt DateTime
+  tailoredResumeId String?
+  createdAt DateTime @default(now())
+  user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+  resume Resume @relation("AnalyzedResume",fields:[resumeId],references:[id],onDelete:Restrict)
+  tailoredResume Resume? @relation("MatchTailoring",fields:[tailoredResumeId],references:[id],onDelete:SetNull)
+  profileVersion ProfileVersion @relation(fields:[profileVersionId],references:[id],onDelete:Restrict)
+  jdVersion JobDescriptionVersion @relation(fields:[jdVersionId],references:[id],onDelete:Restrict)
+  @@index([userId,createdAt])
+}
+
+model BuilderSession {
+  id String @id @default(cuid())
+  userId String
+  analysisId String
+  profileVersionId String
+  proposals Json
+  questions Json
+  discarded Json
+  revision Int @default(0)
+  createdAt DateTime @default(now())
+  user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+  analysis MatchAnalysis @relation(fields:[analysisId],references:[id],onDelete:Restrict)
+  profileVersion ProfileVersion @relation(fields:[profileVersionId],references:[id],onDelete:Restrict)
+  versions BuilderVersion[]
+  @@index([userId,createdAt])
+}
+model BuilderVersion {
+  id String @id @default(cuid())
+  sessionId String
+  revision Int
+  parentId String?
+  parent BuilderVersion? @relation("BuilderVersionHistory",fields:[parentId],references:[id],onDelete:SetNull)
+  children BuilderVersion[] @relation("BuilderVersionHistory")
+  document Json
+  text String
+  decisions Json
+  template String
+  lengthTarget Int
+  status String
+  approvedAt DateTime?
+  readiness Json
+  evidence Json
+  exportValidation Json?
+  resumeId String? @unique
+  createdAt DateTime @default(now())
+  session BuilderSession @relation(fields:[sessionId],references:[id],onDelete:Restrict)
+  resume Resume? @relation(fields:[resumeId],references:[id],onDelete:SetNull)
+  @@unique([sessionId,revision])
+}

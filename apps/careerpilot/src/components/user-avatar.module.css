@@ -1,0 +1,2 @@
+.avatar{box-sizing:border-box;display:inline-grid;place-items:center;flex-shrink:0;width:30px;height:30px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font:700 13px/1 var(--font-sans);letter-spacing:-.02em;vertical-align:middle}
+.profile{width:44px;height:44px;font-size:18px}.menu{width:20px;height:20px;font-size:10px}

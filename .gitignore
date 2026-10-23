@@ -1,0 +1,33 @@
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+.DS_Store
+
+.data/
+
+# CareerPilot AI generated/runtime files
+**/.next/
+**/src/generated/
+**/playwright-report/
+**/test-results/
+**/*.tsbuildinfo
+
+# Local password hashes and sessions
+**/.local/
+
+# Generated bundled guest workspace
+apps/careerpilot/public/guest-assets/
+
+# Temporary isolated Next compilation checks
+apps/careerpilot/.guest-route-check-*/
+
+apps/careerpilot/.local-auth-check-*/
+apps/careerpilot/.route-compile-check-*/
+
+# Temporary profile/API checks
+apps/careerpilot/.profile-save-check-*/
+
+# Local reference document (not application source)
+/JD & PS.pdf

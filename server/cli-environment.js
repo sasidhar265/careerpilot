@@ -1,0 +1,2 @@
+// Keep provider login/PATH/HOME settings, but never give a CLI model the SaaS database or document keys.
+export function cliEnvironment(source=process.env){const env={...source};for(const name of Object.keys(env))if(/(?:^|_)(?:SECRET|PASSWORD|ENCRYPTION_KEYS|PRIVATE_KEY)$/.test(name)||['DATABASE_URL','E2E_DATABASE_URL','INTEGRATION_DATABASE_URL','OPENAI_API_KEY','CODEX_API_KEY','COPILOT_ALLOW_ALL'].includes(name))delete env[name];return env;}

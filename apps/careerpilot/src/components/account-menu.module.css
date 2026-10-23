@@ -1,0 +1,12 @@
+.controls{display:inline-flex;align-items:center;gap:8px;flex-shrink:0}
+.profileLink,.trigger{box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;gap:8px;height:44px;min-height:44px;min-width:44px;flex-shrink:0;padding:10px;border:1px solid var(--border);border-radius:var(--radius-control);background:var(--card);color:var(--foreground);font:500 13px/1 var(--font-sans);text-decoration:none;vertical-align:middle;cursor:pointer}
+.profileLink{width:44px;padding:0}.profileLink:hover,.trigger:hover{background:var(--muted)}.profileLink:hover,.trigger[aria-expanded=true]{border-color:var(--primary)}
+.trigger{padding:6px 10px}.menu{position:relative;display:flex;align-items:center}.trigger[aria-expanded=true]{background:var(--muted)}.triggerIcon{color:var(--muted-foreground)}.triggerIcon,.chevron{flex-shrink:0}
+.name{max-width:132px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;font-weight:600}
+.popover{position:absolute;right:0;top:calc(100% + 10px);z-index:60;box-sizing:border-box;width:min(280px,calc(100vw - 32px));padding:8px;border:1px solid var(--border);border-radius:var(--radius-card);background:var(--card);color:var(--foreground);box-shadow:var(--overlay-shadow)}
+.identity{display:flex;align-items:center;gap:12px;padding:10px 12px 14px;border-bottom:1px solid var(--border);overflow-wrap:anywhere}.identity p{margin:0;font-size:13px;font-weight:600;line-height:1.6}.identity small{font-size:12px;line-height:1.6;color:var(--muted-foreground)}
+.options{padding-top:6px}.options a,.options button{display:flex;align-items:center;gap:10px;box-sizing:border-box;width:100%;min-height:44px;padding:10px 12px;border:0;border-radius:8px;background:transparent;color:var(--foreground);text-align:left;text-decoration:none;font:500 13px/1.5 var(--font-sans);cursor:pointer}.options a:hover,.options button:hover{background:var(--muted)}
+.profileLink:focus-visible,.trigger:focus-visible,.options a:focus-visible,.options button:focus-visible{outline:3px solid var(--primary);outline-offset:3px}
+@media(max-width:639px){.name{display:none}}@media(max-width:359px){.chevron{display:none}.controls{gap:6px}}
+
+.identityText{min-width:0;overflow-wrap:anywhere}
