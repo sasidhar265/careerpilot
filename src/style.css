@@ -52,7 +52,7 @@
 .guest-banner{display:flex;flex-wrap:wrap;gap:6px 16px;padding:14px 18px;margin-bottom:24px;border:1px solid var(--border);background:var(--muted);border-radius:10px;font-size:12px;line-height:1.7}.guest-banner strong{color:var(--primary)}.guest-dashboard .guest-statistics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:24px 0}.guest-statistics button.card{padding:20px;text-align:left;color:inherit}.guest-statistics span{display:block;font-size:12px}.guest-statistics strong{display:block;margin-top:10px;font-size:28px}.guest-information{padding:24px;margin-bottom:20px}.guest-information p{font-size:13px;line-height:1.8;color:var(--muted-foreground)}.guest-information .job-actions{flex-wrap:wrap}@media(max-width:850px){.guest-dashboard .guest-statistics{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .guest-brand{font-size:22px;letter-spacing:-.8px;padding-left:0;gap:6px}.guest-brand .brand-dot{font-size:12px;letter-spacing:0}
 
-/* Shared CareerPilot shell: the same navy, blue and mint identity on every screen. */
+/* Shared CareerPilotAI shell: the same navy, blue and mint identity on every screen. */
 body{font:14px/1.6 var(--font-sans);background:var(--background);color:var(--foreground)}
 [hidden]{display:none!important}
 h1{font-size:clamp(1.8rem,3vw,2.55rem);letter-spacing:-.045em;line-height:1.2}

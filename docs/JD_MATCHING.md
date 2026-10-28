@@ -49,7 +49,7 @@ For account erasure, delete matching reports and JD versions **before** profile 
 
 ## Tests and release gates
 
-Executed: 46 CareerPilot native tests and 161 existing regression tests. New cases cover exact evidence, partial qualification, mandatory/preferred factors, category weighting and zero denominators, negation/aspiration, no semantic promotion, literal punctuation/boundaries, explicit-only eligibility blockers, sponsorship exclusion, unsupported JD evidence/title, duplicate criteria, pending profiles, invalid scoring and claim-preserving tailoring. App/config/test syntax transforms and browser bundles pass.
+Executed: 46 CareerPilotAI native tests and 161 existing regression tests. New cases cover exact evidence, partial qualification, mandatory/preferred factors, category weighting and zero denominators, negation/aspiration, no semantic promotion, literal punctuation/boundaries, explicit-only eligibility blockers, sponsorship exclusion, unsupported JD evidence/title, duplicate criteria, pending profiles, invalid scoring and claim-preserving tailoring. App/config/test syntax transforms and browser bundles pass.
 
 Added a real-PostgreSQL integration scenario for exact versions/hashes, owner isolation, immutable reports/JDs, configured AI-boundary failure, unsupported URLs and idempotent tailoring. Added a browser scenario for checklist review, score/evidence UI, owner isolation, history and exports; only AI extraction is substituted with an explicit persisted test fixture, while scoring and persistence call the real backend.
 

@@ -7,7 +7,7 @@ dist/
 
 .data/
 
-# CareerPilot AI generated/runtime files
+# CareerPilotAI generated/runtime files
 **/.next/
 **/src/generated/
 **/playwright-report/
@@ -18,16 +18,16 @@ dist/
 **/.local/
 
 # Generated bundled guest workspace
-apps/careerpilot/public/guest-assets/
+apps/careerpilot-ai/public/guest-assets/
 
 # Temporary isolated Next compilation checks
-apps/careerpilot/.guest-route-check-*/
+apps/careerpilot-ai/.guest-route-check-*/
 
-apps/careerpilot/.local-auth-check-*/
-apps/careerpilot/.route-compile-check-*/
+apps/careerpilot-ai/.local-auth-check-*/
+apps/careerpilot-ai/.route-compile-check-*/
 
 # Temporary profile/API checks
-apps/careerpilot/.profile-save-check-*/
+apps/careerpilot-ai/.profile-save-check-*/
 
 # Local reference document (not application source)
 /JD & PS.pdf

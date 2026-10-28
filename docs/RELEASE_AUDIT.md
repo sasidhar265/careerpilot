@@ -1,4 +1,4 @@
-# CareerPilot AI integration and release audit
+# CareerPilotAI integration and release audit
 
 Audit date: 23 October 2026. Decision: **NO-GO for production**. Implementation and locally executable tests were reviewed; the full application has not been demonstrated running in this environment. Existing legacy functionality and private data were preserved. No deployment or external account changes were performed.
 

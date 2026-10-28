@@ -1,4 +1,4 @@
-# CareerPilot AI job discovery
+# CareerPilotAI job discovery
 
 ## Provider verification and operational status
 
@@ -18,16 +18,16 @@ Licensed aggregate providers and authorised partner feeds were considered as sep
 
 ## Setup
 
-Install dependencies and configure the app's PostgreSQL/OIDC environment as described in `apps/careerpilot/README.md`. The migration role needs `pg_trgm` available (ask the database administrator to enable that extension if managed PostgreSQL restricts extension creation).
+Install dependencies and configure the app's PostgreSQL/OIDC environment as described in `apps/careerpilot-ai/README.md`. The migration role needs `pg_trgm` available (ask the database administrator to enable that extension if managed PostgreSQL restricts extension creation).
 
 ```sh
-npm --prefix apps/careerpilot run db:generate
-npm --prefix apps/careerpilot run db:migrate
+npm --prefix apps/careerpilot-ai run db:generate
+npm --prefix apps/careerpilot-ai run db:migrate
 # Preserve existing IDs/history while assigning canonical URLs and flagging exact-link duplicates:
-npm --prefix apps/careerpilot run jobs:reindex
+npm --prefix apps/careerpilot-ai run jobs:reindex
 ```
 
-Set `JOB_EMPLOYER_BOARDS` in **apps/careerpilot/.env**, using your reviewed real board identifiers. Its shape is:
+Set `JOB_EMPLOYER_BOARDS` in **apps/careerpilot-ai/.env**, using your reviewed real board identifiers. Its shape is:
 
 ```json
 [{"provider":"greenhouse","board":"your-reviewed-board","company":"Your employer name","region":"global"}]
@@ -37,13 +37,13 @@ This example is a configuration shape, not a working employer or a source of sam
 
 ```sh
 # Collect due sources once:
-npm --prefix apps/careerpilot run jobs:ingest
+npm --prefix apps/careerpilot-ai run jobs:ingest
 # Force one immediate refresh, then respect persisted due dates:
-npm --prefix apps/careerpilot run jobs:ingest -- --force
+npm --prefix apps/careerpilot-ai run jobs:ingest -- --force
 # Worker polls every minute; successful sources become due after about an hour:
-npm --prefix apps/careerpilot run jobs:ingest -- --watch
+npm --prefix apps/careerpilot-ai run jobs:ingest -- --watch
 # Explicit non-destructive historical import, without claiming current verification:
-npm --prefix apps/careerpilot run data:import
+npm --prefix apps/careerpilot-ai run data:import
 ```
 
 Compose already runs this worker. Source leases prevent two workers claiming the same due source; transport rate pacing is per process, so deploy one worker initially or add a provider-wide distributed request limiter before increasing replicas. Successful refreshes have small schedule jitter; failures back off from five minutes to 24 hours, or longer when `Retry-After` requires it. Stale leases expire. Collection has a 110-second overall budget, at most three concurrent sources, 15-second HTTP timeouts, ten-MB response limits, bounded retries, no redirects, and no alternate-host retries on access denial.
@@ -105,14 +105,14 @@ Actual source enumeration sets `lastVerifiedAt` to its collection start time. Th
 Unit tests cover URL/range validation, filter combinations, literal SQL binding, technology punctuation/boundaries, geo math construction, pagination parameters, canonical identity, freshness, provider normalizers, rate/access/malformed/oversize failures, bounded retries, partial detail coverage and pagination caps. PostgreSQL integration tests exercise actual query execution, stable pages, combined filters, geospatial selection, owner preferences, saved searches, idempotent ingestion, retained observations and missing-listing lifecycle. Playwright adds debounce/restore, collections, hide/unhide and cross-owner saved-search deletion.
 
 ```sh
-npm --prefix apps/careerpilot test
+npm --prefix apps/careerpilot-ai test
 # Export INTEGRATION_DATABASE_URL to a migrated, isolated database ending in _test:
-npm --prefix apps/careerpilot run test:integration
+npm --prefix apps/careerpilot-ai run test:integration
 # E2E requires E2E_DATABASE_URL, both browsers/dependencies and all migrations:
-npm --prefix apps/careerpilot run test:e2e
-npm --prefix apps/careerpilot run lint
-npm --prefix apps/careerpilot run typecheck
-npm --prefix apps/careerpilot run build
+npm --prefix apps/careerpilot-ai run test:e2e
+npm --prefix apps/careerpilot-ai run lint
+npm --prefix apps/careerpilot-ai run typecheck
+npm --prefix apps/careerpilot-ai run build
 ```
 
 Execution results in this environment: **28 unit tests passed; 159 existing regressions passed.** The PostgreSQL integration scenario was explicitly skipped without a test database, not passed. Dependency install still fails `ENOTFOUND registry.npmjs.org`; lint/typecheck/build stop at missing ESLint/Prisma, and E2E cannot load the required Playwright Test runner. Syntax transforms passed for 101 TypeScript modules and 15 browser bundles resolved without Node-only imports; these checks do not substitute for types or runtime execution. No successful live provider connectivity, SQL migration execution, performance benchmark, browser run or production readiness is claimed. Resolve dependencies/lockfile, configure PostgreSQL and reviewed boards, apply migrations/reindex, run real ingestion and inspect `/api/job-sources`, configure permitted geocoding if needed, then pass integration/browser checks before release.

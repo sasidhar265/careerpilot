@@ -4,20 +4,20 @@
 
 | Check | Actual result |
 |---|---|
-| `npm --prefix apps/careerpilot test` | **82 passed, 0 failed, 0 skipped**, native Node tests |
+| `npm --prefix apps/careerpilot-ai test` | **82 passed, 0 failed, 0 skipped**, native Node tests |
 | `npm test` | **163 passed, 0 failed**, existing application regressions |
 | esbuild syntax checks | 159 application/config/test modules parsed; browser bundle checks passed for four affected entry points. This is not TypeScript checking. |
 | Real document tests | Actual generated DOCX/searchable PDF, text re-extraction, source preservation and malformed archive checks executed in native suite |
-| `npm --prefix apps/careerpilot install --ignore-scripts --fetch-retries=0 --fetch-timeout=10000` | Failed: ENOTFOUND registry.npmjs.org; no app lockfile generated |
-| `npm --prefix apps/careerpilot run lint` | Failed to start: ESLint missing (127) |
-| `npm --prefix apps/careerpilot run typecheck` | Failed to start: Prisma missing (127) |
-| `npm --prefix apps/careerpilot run build` | Failed to start: Prisma missing (127) |
-| `npm --prefix apps/careerpilot run db:migrate` | Failed to start: Prisma missing (127); migration SQL not runtime verified |
+| `npm --prefix apps/careerpilot-ai install --ignore-scripts --fetch-retries=0 --fetch-timeout=10000` | Failed: ENOTFOUND registry.npmjs.org; no app lockfile generated |
+| `npm --prefix apps/careerpilot-ai run lint` | Failed to start: ESLint missing (127) |
+| `npm --prefix apps/careerpilot-ai run typecheck` | Failed to start: Prisma missing (127) |
+| `npm --prefix apps/careerpilot-ai run build` | Failed to start: Prisma missing (127) |
+| `npm --prefix apps/careerpilot-ai run db:migrate` | Failed to start: Prisma missing (127); migration SQL not runtime verified |
 | Optional integration discovery | **5 skipped**, zero database scenarios executed; not passes |
-| `npm --prefix apps/careerpilot run test:integration:required` | Exit 1: explicit isolated database absent |
-| `npm --prefix apps/careerpilot run test:e2e` | Exit 1: local @playwright/test CLI module missing |
-| `npm --prefix apps/careerpilot run test:e2e:journey` | Exit 1: explicit isolated database absent |
-| `npm --prefix apps/careerpilot run preflight` | Exit 1: missing app configuration, lockfile/client. Syntax/presence report only; cannot certify readiness |
+| `npm --prefix apps/careerpilot-ai run test:integration:required` | Exit 1: explicit isolated database absent |
+| `npm --prefix apps/careerpilot-ai run test:e2e` | Exit 1: local @playwright/test CLI module missing |
+| `npm --prefix apps/careerpilot-ai run test:e2e:journey` | Exit 1: explicit isolated database absent |
+| `npm --prefix apps/careerpilot-ai run preflight` | Exit 1: missing app configuration, lockfile/client. Syntax/presence report only; cannot certify readiness |
 | PostgreSQL runtime | Installed 16.14 binary, no service. Two fresh temporary initdb attempts failed with shmget Operation not permitted |
 | Docker runtime | CLI present; daemon socket unavailable. Image, Compose services and health not executed |
 | Root `npm audit --omit=dev --audit-level=high` | Exit 1: advisory endpoint DNS ENOTFOUND |
@@ -42,7 +42,7 @@ Final bundle rerun used the actual application-tracker, profile-workspace, match
 
 After the original audit, app packages and an app lockfile became available in the workspace. Earlier missing-package findings above are historical results, not the current blocker. No package version/lockfile compatibility certification is inferred.
 
-Added native real-file auth tests and a local-only browser suite; the native suite now passes **88 tests**. `npm --prefix apps/careerpilot run lint` now passes after correcting an anonymous PostCSS export, unused type import and unchanged diagnostics binding. Typecheck/build/Prisma generation now start but fail reaching `binaries.prisma.sh` (ENOTFOUND). Local Playwright starts Next but the sandbox rejects its listening socket with EPERM; manual dev startup likewise fails, including an explicit 127.0.0.1 bind. Browser assertions remain unexecuted. No working browser sign-in is claimed from these native results. See [local authentication](LOCAL_AUTH.md) for enabled configuration and exact scope.
+Added native real-file auth tests and a local-only browser suite; the native suite now passes **88 tests**. `npm --prefix apps/careerpilot-ai run lint` now passes after correcting an anonymous PostCSS export, unused type import and unchanged diagnostics binding. Typecheck/build/Prisma generation now start but fail reaching `binaries.prisma.sh` (ENOTFOUND). Local Playwright starts Next but the sandbox rejects its listening socket with EPERM; manual dev startup likewise fails, including an explicit 127.0.0.1 bind. Browser assertions remain unexecuted. No working browser sign-in is claimed from these native results. See [local authentication](LOCAL_AUTH.md) for enabled configuration and exact scope.
 
 
 ## Follow-up: database-free guest workflow
@@ -57,7 +57,7 @@ Native app suite: **91 passed, zero failures/skips**. New cases cover distinct l
 
 ## Follow-up: broken Continue as guest button
 
-Root cause confirmed in configuration/process inspection: landing navigation depended on a separate localhost:5173 service, while only the CareerPilot listener existed. Guest now serves on the CareerPilot origin at `/guest`; APIs use real in-process handlers under `/api/guest/*`, not a second server. 172 root tests and 91 app tests pass, including actual socket-free catalogue/health/body-validation, private-path/origin rejection and API URL mapping. Initial root execution had five failures because the component harness rejected the new shared HTTP adapter import; adding the actual adapter to the loader fixed those failures without weakening assertions. Guest build succeeds with the existing large-chunk warning; isolated guest route/config TypeScript passes. Browser entry regression now targets Next and the actual landing guest button; actual rendered verification remains blocked by local network/listen restrictions.
+Root cause confirmed in configuration/process inspection: landing navigation depended on a separate localhost:5173 service, while only the CareerPilotAI listener existed. Guest now serves on the CareerPilotAI origin at `/guest`; APIs use real in-process handlers under `/api/guest/*`, not a second server. 172 root tests and 91 app tests pass, including actual socket-free catalogue/health/body-validation, private-path/origin rejection and API URL mapping. Initial root execution had five failures because the component harness rejected the new shared HTTP adapter import; adding the actual adapter to the loader fixed those failures without weakening assertions. Guest build succeeds with the existing large-chunk warning; isolated guest route/config TypeScript passes. Browser entry regression now targets Next and the actual landing guest button; actual rendered verification remains blocked by local network/listen restrictions.
 
 Final socket-free verification called the actual compiled `/guest` HTML route: HTTP 200, no-store headers and all referenced generated script/style/favicon files present. No secondary process was used. The Playwright server still fails listen EPERM on 127.0.0.1:3103. The first lint run after asset generation tried to parse generated minified vendor bundles and crashed; added the generated output directory to ESLint's ignores and reran lint. Source files remain checked.
 
@@ -110,7 +110,7 @@ Latest database integration discovery: **6 skipped, zero executed**, because no 
 ### Expanded profile verification — 23 October 2026
 - **99 unit tests passed, zero failures.** New checks cover old-account defaults, career/contact persistence after reopening storage, isolation between accounts, stale career edits, revoked profile access, strict link/phone/length validation, unsupported extra fields, and draft content preservation/empty-section omission.
 - ESLint and focused local-auth/UI/profile API TypeScript checks passed. Isolated Webpack route compilation passed; full database-dependent production build remains outside this verification.
-- Playwright scenario extended for phone, location and career fields, reload, mobile overflow and text download. Attempted `npm --prefix apps/careerpilot run test:e2e:local-auth`; server startup failed with `listen EPERM 127.0.0.1:3102`, so browser rendering and interactions remain unverified here.
+- Playwright scenario extended for phone, location and career fields, reload, mobile overflow and text download. Attempted `npm --prefix apps/careerpilot-ai run test:e2e:local-auth`; server startup failed with `listen EPERM 127.0.0.1:3102`, so browser rendering and interactions remain unverified here.
 
 ### Local resume import verification — 23 October 2026
 - **102 unit tests passed, zero failures.** Includes genuine generated PDF/DOCX documents through the existing safe extractor into profile proposals, byte preservation, source-backed fields, chronology and uppercase role preservation, unrecognised layouts and oversized-section handling.
@@ -120,7 +120,7 @@ Latest database integration discovery: **6 skipped, zero executed**, because no 
 ### DOCX/PDF bundled-runtime regression — 23 October 2026
 - Reproduced an extraction failure with the default Turbopack compiler: a static dependency `require.resolve` became a numeric module ID, which cannot be converted into a filesystem URL for the extraction worker. Direct Node tests and Webpack did not reproduce it.
 - Fixed dependency resolution using a runtime resolver and Turbopack ignore annotation. Worker validation, archive limits and document security checks remain enabled.
-- Added `npm --prefix apps/careerpilot run test:extraction:runtime`. It compiles an isolated Next route using the actual server extraction wrapper, then invokes its compiled handler with real generated DOCX and PDF bytes. Both formats pass with Turbopack and with `CAREERPILOT_CHECK_BUNDLER=webpack`. No network listener or database is needed. This is a compiled runtime check, not browser E2E or a full application build.
+- Added `npm --prefix apps/careerpilot-ai run test:extraction:runtime`. It compiles an isolated Next route using the actual server extraction wrapper, then invokes its compiled handler with real generated DOCX and PDF bytes. Both formats pass with Turbopack and with `CAREERPILOT_CHECK_BUNDLER=webpack`. No network listener or database is needed. This is a compiled runtime check, not browser E2E or a full application build.
 - All 102 application unit tests and focused TypeScript checks pass. Initial lint caught a prohibited script variable name; renamed before rerunning lint.
 - Missing DOCX reader dependencies now report service unavailability separately from unreadable document content. Unreadable-content guidance suggests saving a fresh DOCX copy or a searchable PDF. No document text, filename or internal parser stack is logged or exposed.
 - The user's specific document was not available for inspection; the reproduced bundler regression is resolved, while unusual or damaged files may still fail safe validation.
@@ -147,7 +147,7 @@ Latest database integration discovery: **6 skipped, zero executed**, because no 
 
 ### Save changes verification — 23 October 2026
 - **116 unit tests passed, zero failures.** Added checks for equivalent snapshot key ordering, preserved stale-write rejection, domain-only link normalization and client/server schema validation.
-- **Actual API smoke passed:** `npm --prefix apps/careerpilot run test:profile:save` bundles the actual PATCH handler, supplies real Next cookie request context, and saves imported address and SDET role data to an isolated private file store. Reopening the store confirms persistence. Checks include invalid data (400), stale edits (409), invalid session (401) and disallowed origin (403).
+- **Actual API smoke passed:** `npm --prefix apps/careerpilot-ai run test:profile:save` bundles the actual PATCH handler, supplies real Next cookie request context, and saves imported address and SDET role data to an isolated private file store. Reopening the store confirms persistence. Checks include invalid data (400), stale edits (409), invalid session (401) and disallowed origin (403).
 - ESLint and focused TypeScript passed. The existing browser edit scenario now supplies a domain-only LinkedIn URL; browser execution remains unverified due to the documented server restrictions.
 - No real account data or credentials were read or altered during these checks. The exact reported browser interaction was not directly observed.
 
@@ -155,7 +155,7 @@ Latest database integration discovery: **6 skipped, zero executed**, because no 
 - **117 unit tests passed, zero failures.** New PDF test checks PDF signature, exact text re-extraction, contact information, separate role details, C# content, Certificates/Achievements ordering and profile immutability.
 - `test:profile:save` now also invokes the real PDF GET handler with Next session cookies. Verified `application/pdf`, PDF attachment filename, readable saved address/role content, unchanged storage bytes and 401 for invalid sessions.
 - `test:extraction:runtime` now executes compiled Next PDF generation and source-text validation, passing under Turbopack alongside the existing DOCX/PDF extraction checks. Initial harness failures from Next navigation resolution and lazy userland access were fixed; final runtime and API checks pass.
-- ESLint and focused TypeScript passed. Browser E2E expects `CareerPilot-CV.pdf`; browser execution remains unverified in this environment. Full database-dependent application build remains outside these checks.
+- ESLint and focused TypeScript passed. Browser E2E expects `CareerPilotAI-CV.pdf`; browser execution remains unverified in this environment. Full database-dependent application build remains outside these checks.
 
 ### Profile resume preview verification — 23 October 2026
 - Actual local-account/profile PDF routes compile in the isolated Webpack check; focused TypeScript passes.

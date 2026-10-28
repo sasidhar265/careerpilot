@@ -61,7 +61,7 @@ For account erasure, clear active profile pointers, delete builder versions and 
 
 ## Validation
 
-Executed: **62 CareerPilot native tests**, **162 existing regression tests**, syntax transforms and four affected browser bundles. Real document tests validate DOCX XML/A4/no-table structure, editable Unicode text, both PDF templates, embedded-font searchable text, multi-page preservation, exact metrics and explicit missing-glyph failure. Builder tests cover whole-fact preservation, professional/project scope, unsupported metrics/skills, accepted/rejected/edited proposals, chronology, section/skill permutations, manual draft blockers, date inconsistency and source page evidence.
+Executed: **62 CareerPilotAI native tests**, **162 existing regression tests**, syntax transforms and four affected browser bundles. Real document tests validate DOCX XML/A4/no-table structure, editable Unicode text, both PDF templates, embedded-font searchable text, multi-page preservation, exact metrics and explicit missing-glyph failure. Builder tests cover whole-fact preservation, professional/project scope, unsupported metrics/skills, accepted/rejected/edited proposals, chronology, section/skill permutations, manual draft blockers, date inconsistency and source page evidence.
 
 Added PostgreSQL integration coverage for original bytes before/after generation, owner isolation, review requirements, unsupported drafts, approved versions, document re-extraction, optimistic conflicts, restore history and database immutability. Added Playwright coverage for review/edit/draft/approve/download/restore against actual persistence; the AI proposal boundary is an explicit seeded fixture. Actual configured-provider output still requires a deployment smoke check.
 

@@ -1,5 +1,5 @@
 import {authorizedRequestOrigin,isLocalOriginAlias} from '../src/request-origin.js';
-const reads=new Set(['health','providers','jobs','jobs/catalogue','jobs/employers','jobs/sources']);
+const reads=new Set(['health','providers','jobs','jobs/catalogue','jobs/careers','jobs/employers','jobs/sources']);
 const writes=new Set(['jobs/employers','jobs/refresh','jobs/lookup','ai/job','ai/compare','ai/rewrite','ai/screen','ai/supporting']);
 const json=(status,error)=>Response.json({error},{status,headers:{'Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff'}});
 /** Invoke the actual local handler without opening a second HTTP server. */

@@ -1,0 +1,37 @@
+import {mkdtemp,rm} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import {join,resolve} from 'node:path';
+import {fileURLToPath,pathToFileURL} from 'node:url';
+import {createRequire} from 'node:module';
+import assert from 'node:assert/strict';
+import {build} from 'esbuild';
+import {createFileAuth} from '../src/lib/file-auth.mjs';
+import {readAuthResponse} from '../src/lib/auth-response.ts';
+const app=fileURLToPath(new URL('..',import.meta.url)),require=createRequire(join(app,'package.json')),scratch=await mkdtemp(join(app,'.local-auth-check-')),storage=await mkdtemp(join(tmpdir(),'careerpilot-auth-http-'));
+const keys=['NODE_ENV','APP_URL','AUTH_MODE','AUTH_FILE_PATH','DATABASE_URL'],original=Object.fromEntries(keys.map(key=>[key,process.env[key]]));
+try{
+ Object.assign(process.env,{NODE_ENV:'development',APP_URL:'http://localhost:3100',AUTH_MODE:'file',AUTH_FILE_PATH:join(storage,'accounts.json'),DATABASE_URL:''});
+ const bundle=join(scratch,'route.mjs');
+ await build({entryPoints:[resolve(app,'src/app/api/auth/local/route.ts')],outfile:bundle,bundle:true,packages:'external',platform:'node',format:'esm',tsconfig:join(app,'tsconfig.json'),logLevel:'silent',plugins:[{name:'actual-next-runtime',setup(builder){builder.onResolve({filter:/^next\/(server|headers)$/},args=>({path:require.resolve(args.path),external:true}));}}]});
+ const lookup=join(scratch,'account-user.mjs');await build({entryPoints:[resolve(app,'src/server/auth/account-user.ts')],outfile:lookup,bundle:true,packages:'external',platform:'node',format:'esm',tsconfig:join(app,'tsconfig.json'),logLevel:'silent',plugins:[{name:'actual-next-runtime',setup(builder){builder.onResolve({filter:/^next\/(server|headers)$/},args=>({path:require.resolve(args.path),external:true}));}}]});
+ const {resolveAccountUser}=await import(pathToFileURL(lookup).href);
+ const {POST}=await import(pathToFileURL(bundle).href),origin='http://localhost:3100';
+ const request=(fields,requestOrigin=origin)=>new Request(origin+'/api/auth/local',{method:'POST',headers:{Origin:requestOrigin,'Content-Type':'application/x-www-form-urlencoded',Accept:'application/json'},body:new URLSearchParams(fields)});
+ const credentials={intent:'register',name:'Explicit test account',email:'registration@example.test',password:'Test-only +&%=#? ✓ registration 2026',confirmPassword:'Test-only +&%=#? ✓ registration 2026'};
+ const registered=await POST(request(credentials));assert.equal(registered.status,200);assert.deepEqual(await readAuthResponse(registered.clone()),{redirectTo:'/local-workspace'});
+ const cookie=registered.headers.get('set-cookie');assert.match(cookie,/HttpOnly/i);assert.match(cookie,/SameSite=lax/i);const token=/careerpilot_session=([^;]+)/.exec(cookie)?.[1];assert.ok(token);const store=createFileAuth(join(storage,'accounts.json'));assert.equal((await store.currentUser(token)).email,credentials.email);assert.equal((await resolveAccountUser(token)).email,credentials.email);assert.equal(await resolveAccountUser('invalid'),null);
+ assert.equal((await POST(request(credentials))).status,409);
+ assert.equal((await POST(request({...credentials,intent:'login',password:'wrong password'}))).status,401);
+ const signedIn=await POST(request({...credentials,intent:'login'}));assert.equal(signedIn.status,200);assert.deepEqual(await readAuthResponse(signedIn.clone()),{redirectTo:'/local-workspace'});
+ assert.equal((await POST(request({...credentials,email:'other@example.test',confirmPassword:'mismatch'}))).status,400);
+ assert.equal((await POST(request(credentials,'https://untrusted.example'))).status,403);
+ const alias='http://127.0.0.1:3100',aliasFields={...credentials,email:'alias@example.test'};
+ const aliasRequest=(fields,json=true,target=alias,supplied=target)=>new Request(target+'/api/auth/local',{method:'POST',headers:{Origin:supplied,'Content-Type':'application/x-www-form-urlencoded',Accept:json?'application/json':'text/html'},body:new URLSearchParams(fields)});
+ const aliasRegistration=await POST(aliasRequest(aliasFields));assert.equal(aliasRegistration.status,200);assert.deepEqual(await readAuthResponse(aliasRegistration.clone()),{redirectTo:'/local-workspace'});const aliasToken=/careerpilot_session=([^;]+)/.exec(aliasRegistration.headers.get('set-cookie'))?.[1];assert.equal((await store.currentUser(aliasToken)).email,aliasFields.email);
+ const nativeRegistration=await POST(aliasRequest({...credentials,email:'native-alias@example.test'},false));assert.equal(nativeRegistration.status,303);assert.equal(nativeRegistration.headers.get('location'),alias+'/local-workspace');
+ const nativeFailure=await POST(aliasRequest({...credentials,intent:'login',password:'wrong'},false));assert.equal(new URL(nativeFailure.headers.get('location')).origin,alias);
+ assert.equal((await POST(aliasRequest(aliasFields,true,'http://127.0.0.1:3101'))).status,403);
+ process.env.NODE_ENV='production';assert.equal((await POST(aliasRequest(aliasFields))).status,403);process.env.NODE_ENV='development';
+ await store.revoke(token);assert.equal(await resolveAccountUser(token),null);
+ console.log('Actual registration/sign-in handlers, cookies, safe local aliases and same-origin redirects passed without PostgreSQL or Prisma.');
+}finally{for(const key of keys){if(original[key]===undefined)delete process.env[key];else process.env[key]=original[key];}await rm(scratch,{recursive:true,force:true});await rm(storage,{recursive:true,force:true});}

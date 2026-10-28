@@ -89,7 +89,7 @@ export async function getProviderStatus(provider,{refresh=false,fetchImpl=fetch,
  if(provider==='copilot')directory=await mkdtemp(join(tmpdir(),'align-copilot-check-'));
  rpc=rpcFactory(binary,provider==='codex'?['app-server','--stdio']:['--headless','--stdio','--no-auto-update','--log-level','none','--log-dir',directory,'--no-custom-instructions','--disable-builtin-mcps'],{framed:provider==='copilot',env:childEnv,...(directory?{cwd:directory}:{})});
  if(provider==='codex'){
- await rpc.request('initialize',{clientInfo:{name:'align-resume-studio',version:'1.0.0'},capabilities:{experimentalApi:true}});rpc.notify('initialized');const account=await rpc.request('account/read',{refreshToken:false});
+ await rpc.request('initialize',{clientInfo:{name:'careerpilot-ai',version:'1.0.0'},capabilities:{experimentalApi:true}});rpc.notify('initialized');const account=await rpc.request('account/read',{refreshToken:false});
  if(!account.account){Object.assign(result,{status:'unavailable',available:false,message:'Run codex login to connect this provider.'});}
  else{result.quota=normalizeCodexLimits(await rpc.request('account/rateLimits/read'));if(result.quota.length){const depleted=result.quota.some(q=>q.remainingPercent<=0);Object.assign(result,{status:depleted?'exhausted':'ready',available:!depleted,message:depleted?'Codex rate limit reached. Wait for the quota window to reset.':'Codex login and rate limits verified.'});}else result.message='Codex login verified. Remaining limits were not supplied.';}
  }else{

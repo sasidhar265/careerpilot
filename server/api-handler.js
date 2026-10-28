@@ -10,6 +10,7 @@ export function createApiHandler(options={}){const jobs=options.jobsService||cre
  try{
  const params=new URL(req.url,'http://localhost').searchParams;
  if(req.method==='GET'&&pathname==='/api/jobs')return send(200,await jobs.browse(params));
+ if(req.method==='GET'&&pathname==='/api/jobs/careers')return send(200,await jobs.searchCareers(params));
  if(req.method==='GET'&&pathname==='/api/jobs/catalogue')return send(200,await jobs.browse(params));
  if(req.method==='GET'&&pathname==='/api/jobs/employers')return send(200,await jobs.employers());
  if(req.method==='POST'&&pathname==='/api/jobs/employers'){let raw='';for await(const chunk of req){raw+=chunk;if(Buffer.byteLength(raw)>5000)return send(413,{error:'Employer request is too large.'});}let body;try{body=JSON.parse(raw);}catch{return send(400,{error:'Invalid employer request.'});}if(!body||typeof body!=='object')return send(400,{error:'Invalid employer request.'});return send(201,{employer:await jobs.addEmployer(body)});}

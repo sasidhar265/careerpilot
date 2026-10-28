@@ -14,5 +14,5 @@ test('freshness distinguishes unobserved, recently seen, stale and expired listi
 test('search exposes live and collected sources without fabricated initial vacancies',()=>{
  const html=renderToStaticMarkup(React.createElement(JobSearch,{onTailor:()=>{},onChange:()=>{}}));
  for(const text of ['All sources','Greenhouse','Lever','Ashby','Job sources &amp; freshness','Search NHS Jobs'])assert.ok(html.includes(text),text);
- assert.ok(!html.includes('job-result-top'));assert.ok(!html.includes('Adzuna'));assert.ok(!html.includes('Search in'));
+ assert.ok(!html.includes('job-result-top'));assert.ok(!html.includes('Adzuna'));assert.ok(html.includes('Search in'));assert.ok(html.includes('Company career sites'));assert.ok(html.includes('Cognizant'));assert.ok(html.includes('NTT DATA'));
 });

@@ -1,6 +1,6 @@
 # Built-in local guest workspace
 
-Guest mode now runs **inside CareerPilot on the same origin**, at `/guest`. The earlier link to a separate server on port 5173 failed when that server was not running. That architecture has been replaced for the landing-page guest action.
+Guest mode now runs **inside CareerPilotAI on the same origin**, at `/guest`. The earlier link to a separate server on port 5173 failed when that server was not running. That architecture has been replaced for the landing-page guest action.
 
 ## Run
 
@@ -10,7 +10,7 @@ From the repository root:
 npm run careerpilot:dev
 ```
 
-Open `http://localhost:3100` while signed out and choose **Continue as guest**. No second server, PostgreSQL, Prisma generation or sign-in is required for the guest workflow. Restart an already-running CareerPilot process once to pick up the startup/build changes. The `predev` step builds the actual existing guest React workspace into the application's public assets; `/guest` serves its HTML directly. `prebuild` also bundles the assets, and the container configuration copies them. `npm --prefix apps/careerpilot run guest:build` can rebuild just that bundle. `GUEST_WORKSPACE_URL` is obsolete and ignored.
+Open `http://localhost:3100` while signed out and choose **Continue as guest**. No second server, PostgreSQL, Prisma generation or sign-in is required for the guest workflow. Restart an already-running CareerPilotAI process once to pick up the startup/build changes. The `predev` step builds the actual existing guest React workspace into the application's public assets; `/guest` serves its HTML directly. `prebuild` also bundles the assets, and the container configuration copies them. `npm --prefix apps/careerpilot-ai run guest:build` can rebuild just that bundle. `GUEST_WORKSPACE_URL` is obsolete and ignored.
 
 The legacy standalone `npm run guest:dev` remains available for compatibility, but it is not required for the landing-page button. Browser records on that previous port remain on that origin; they are not silently migrated to port 3100. Existing Next accounts and guest browser keys are preserved.
 
@@ -32,7 +32,7 @@ Production guest entry/API access is disabled, as are non-local application orig
 
 ## Verification
 
-The initial separate-server design was defective when only CareerPilot was running. New tests exercise the actual catalogue/health/body-validation handlers in-process, scoped API URLs, cross-origin/write rejection, private-endpoint rejection and sanitized failures, without opening a listening socket. Existing component-handler regression harnesses now load the real shared HTTP adapter. The initial regression run failed five tests because that harness did not recognize the new adapter import; the harness was corrected and rerun, preserving all assertions.
+The initial separate-server design was defective when only CareerPilotAI was running. New tests exercise the actual catalogue/health/body-validation handlers in-process, scoped API URLs, cross-origin/write rejection, private-endpoint rejection and sanitized failures, without opening a listening socket. Existing component-handler regression harnesses now load the real shared HTTP adapter. The initial regression run failed five tests because that harness did not recognize the new adapter import; the harness was corrected and rerun, preserving all assertions.
 
 Latest native counts: 172 root tests and 91 app tests pass. Guest asset build, app lint and isolated TypeScript checking of the guest routes/config pass. The bundle retains the known >500 kB chunk warning. Browser coverage now clicks Continue as guest on the actual landing page, requires `/guest`, calls the real same-origin guest health API, and checks manual application/draft persistence. Browser execution remains subject to sandbox localhost listen restrictions; no full rendered journey is claimed without that run. Next's complete Prisma-backed build/type/migration gates remain independent and unresolved.
 
@@ -47,7 +47,7 @@ Separated `server/api-handler.js` from `server/index.js` startup/configuration a
 
 The UI validates real JSON/record envelopes, reports HTTP status for non-JSON failures without rendering server pages, and provides a working Retry search action. It no longer directs integrated guest users to the unrelated `npm run dev` command. Rebuilt guest assets include that correction.
 
-Verification: 180 root tests and 91 app tests pass. Added actual handler→guest bridge→UI parser keyword coverage, HTML failure/retry recovery and invalid envelope/provider cases. `npm --prefix apps/careerpilot run test:guest:compile` now builds an isolated project containing the real guest API route using Next/Turbopack, without PostgreSQL or a listening socket. The compile passes without the previous module-resolution/tracing warnings. This is an isolated compilation gate, not a full application build or rendered browser pass.
+Verification: 180 root tests and 91 app tests pass. Added actual handler→guest bridge→UI parser keyword coverage, HTML failure/retry recovery and invalid envelope/provider cases. `npm --prefix apps/careerpilot-ai run test:guest:compile` now builds an isolated project containing the real guest API route using Next/Turbopack, without PostgreSQL or a listening socket. The compile passes without the previous module-resolution/tracing warnings. This is an isolated compilation gate, not a full application build or rendered browser pass.
 
 
 ## Visitor-only access after account sign-in

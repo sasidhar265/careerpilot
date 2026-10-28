@@ -55,7 +55,7 @@ The tracker itself does not submit applications, contact employers, send emails 
 
 ## Verification and release gates
 
-Executed: **69 CareerPilot native tests**, **162 existing regressions**, syntax transforms and four affected browser bundles. New native cases cover the ten-stage order, metric denominators, zero/unknown values, no inferred outcomes, retained history outcomes, duplicate URLs/requisition identity and latest-per-job gap aggregation.
+Executed: **69 CareerPilotAI native tests**, **162 existing regressions**, syntax transforms and four affected browser bundles. New native cases cover the ten-stage order, metric denominators, zero/unknown values, no inferred outcomes, retained history outcomes, duplicate URLs/requisition identity and latest-per-job gap aggregation.
 
 Added PostgreSQL tests for persisted create/update details, duplicate preservation, status history, cross-owner access, foreign resume rejection, future dates, optimistic conflicts and history immutability. Extended matching integration to cover actual selected-job tailored-resume → saved job/Preparing and preserving a later Applied state. Added browser coverage for manual creation, preparation persistence, drag/drop, refresh and dashboard counts.
 

@@ -1,0 +1,58 @@
+services:
+  postgres:
+    image: postgres:17-bookworm
+    environment:
+      POSTGRES_DB: careerpilot
+      POSTGRES_USER: careerpilot
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in the app environment file}
+    volumes:
+      - careerpilot-postgres:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U careerpilot -d careerpilot"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+  migrate:
+    build:
+      context: ../..
+      dockerfile: apps/careerpilot-ai/Dockerfile
+      target: builder
+    environment:
+      DATABASE_URL: postgresql://careerpilot:${POSTGRES_PASSWORD}@postgres:5432/careerpilot
+    command: ["npm", "--prefix", "apps/careerpilot-ai", "run", "db:migrate"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+  web:
+    build:
+      context: ../..
+      dockerfile: apps/careerpilot-ai/Dockerfile
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://careerpilot:${POSTGRES_PASSWORD}@postgres:5432/careerpilot
+    ports:
+      - "127.0.0.1:3100:3100"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+  worker:
+    build:
+      context: ../..
+      dockerfile: apps/careerpilot-ai/Dockerfile
+      target: builder
+    environment:
+      DATABASE_URL: postgresql://careerpilot:${POSTGRES_PASSWORD}@postgres:5432/careerpilot
+      JOB_EMPLOYER_BOARDS: ${JOB_EMPLOYER_BOARDS:-[]}
+      JOB_COMPANY_FACTS: ${JOB_COMPANY_FACTS:-[]}
+      JOB_GEOCODING_ENABLED: ${JOB_GEOCODING_ENABLED:-false}
+      JOB_NI_POSTCODES_ALLOWED: ${JOB_NI_POSTCODES_ALLOWED:-false}
+    command: ["npm", "--prefix", "apps/careerpilot-ai", "run", "jobs:ingest", "--", "--watch"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+volumes:
+  careerpilot-postgres:

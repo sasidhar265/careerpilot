@@ -10,7 +10,7 @@
 
 ## Configuration and operation
 
-Install root and CareerPilot dependencies, configure PostgreSQL and authentication, then generate Prisma and apply migrations using the app README. In the private app environment set:
+Install root and CareerPilotAI dependencies, configure PostgreSQL and authentication, then generate Prisma and apply migrations using the app README. In the private app environment set:
 
 ```dotenv
 DOCUMENT_ENCRYPTION_KEYS={"v1":"<base64-encoded 32-byte secret>"}
@@ -29,7 +29,7 @@ A stale editor receives 409 and retains its local edits. Reloading/switching pro
 
 ## Validation and release gates
 
-Executed here: 36 CareerPilot native tests, including actual generated PDF/DOCX extraction, malformed PDF/unsafe ZIP, input limits, missing readable text, deterministic fields/dates, uncertain facts, unsupported/negated AI suggestions, correction evidence invalidation, and encryption identity/tamper/key-rotation checks. Existing regression suite: 160 tests. Syntax transforms and the new browser bundle also pass.
+Executed here: 36 CareerPilotAI native tests, including actual generated PDF/DOCX extraction, malformed PDF/unsafe ZIP, input limits, missing readable text, deterministic fields/dates, uncertain facts, unsupported/negated AI suggestions, correction evidence invalidation, and encryption identity/tamper/key-rotation checks. Existing regression suite: 160 tests. Syntax transforms and the new browser bundle also pass.
 
 Added isolated-PostgreSQL integration coverage for original preservation, cross-owner denial, reviewed saves, explicit active selection, conflicts, history and database immutability. Added Playwright upload/review/activation/download/isolation coverage. Both require a migrated test database (`*_test`) and installed app dependencies; browser upload tests additionally require a test keyring in the application process.
 

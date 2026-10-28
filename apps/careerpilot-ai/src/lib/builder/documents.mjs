@@ -1,0 +1,53 @@
+import {Document,Packer,Paragraph,TextRun} from 'docx';
+import {jsPDF} from 'jspdf';
+import {readFile,stat} from 'node:fs/promises';
+import {createRequire} from 'node:module';
+import {dirname,join} from 'node:path';
+import {extractInWorker} from '../profile/extraction.mjs';
+const runtimeRequire=createRequire(import.meta.url);
+function resolveDependency(name){return runtimeRequire.resolve(/* turbopackIgnore: true */ name);}
+const headings=new Set(['PROFESSIONAL SUMMARY','TECHNICAL SKILLS','CORE SKILLS','TOOLS & TECHNOLOGIES','PROFESSIONAL EXPERIENCE','PROJECTS','EDUCATION','CERTIFICATIONS','CERTIFICATES','ACHIEVEMENTS','LANGUAGES','DOMAIN EXPERTISE']);
+export const canonicalText=text=>text.normalize('NFKC').replace(/[–—]/g,'-').replace(/^[ \t]*[-•][ \t]+/gm,'').replace(/\s+/g,' ').trim();
+function lines(text,executive=false){const values=text.split(/\r?\n/).map(line=>line.trim()).filter(Boolean);let section='';return values.map((text,index)=>{const isHeading=headings.has(text.toUpperCase());if(isHeading)section=text.toUpperCase();const next=values[index+1]||'',subheading=executive&&!isHeading&&index>0&&!text.startsWith('- ')&&((section==='PROFESSIONAL EXPERIENCE'&&/\||\b(?:19|20)\d{2}\b/.test(next))||(section==='EDUCATION'&&/university|college|institute/i.test(next))||(section==='TOOLS & TECHNOLOGIES'&&next.startsWith('- ')));return {text,kind:index===0?'name':isHeading?'heading':text.startsWith('- ')?'bullet':subheading?'subheading':'paragraph'};});}
+
+let fonts,fontKey;
+export async function loadFonts(){const regular=process.env.RESUME_PDF_FONT_REGULAR,bold=process.env.RESUME_PDF_FONT_BOLD,key=JSON.stringify([regular,bold]);if((regular&&!bold)||(!regular&&bold))throw Error('Configure both regular and bold resume PDF fonts.');if(!fonts||fontKey!==key){fontKey=key;const base=join(dirname(resolveDependency('pdfjs-dist/package.json')),'standard_fonts'),paths=regular?[regular,bold]:['Regular','Bold'].map(name=>join(base,'LiberationSans-'+name+'.ttf'));fonts=Promise.all(paths.map(async path=>{if((await stat(path)).size>32*1024*1024)throw Error('PDF font exceeds its size limit.');return readFile(path);}));}return fonts;}
+export async function generateDocument(text,format,template='classic-uk'){
+ if(!['pdf','docx'].includes(format)||!['classic-uk','compact-uk','executive-uk'].includes(template))throw Error('Unsupported export format/template.');
+ const compact=template==='compact-uk',executive=template==='executive-uk',bodySize=compact?10:executive?10.5:11,blocks=lines(text,executive);
+ if(format==='docx'){const doc=new Document({creator:'CareerPilotAI',title:'Curriculum Vitae',description:'Evidence-reviewed UK CV',styles:{default:{document:{run:{font:'Arial',size:bodySize*2,color:'202020'}}}},sections:[{properties:{page:{size:{width:11906,height:16838},margin:{top:850,bottom:850,left:1000,right:1000}}},children:blocks.map(b=>new Paragraph({children:[new TextRun({text:b.kind==='bullet'?b.text.slice(2):b.text,bold:b.kind==='name'||b.kind==='heading'||b.kind==='subheading',size:b.kind==='name'?(executive?50:34):b.kind==='heading'?(executive?22:23):bodySize*2,color:executive&&(b.kind==='name'||b.kind==='heading')?'20364D':'202020',font:'Arial'})],...(b.kind==='bullet'?{bullet:{level:0}}:{}),spacing:{before:b.kind==='heading'?(executive?240:200):0,after:compact?65:100},...(executive&&b.kind==='heading'?{border:{bottom:{style:'single',size:4,color:'CBD5E1'}}}:{}),keepNext:b.kind==='heading'||b.kind==='name',keepLines:true}))}]});return {bytes:await Packer.toBuffer(doc),pages:null};}
+ const [regular,bold]=await loadFonts(),pdf=new jsPDF({unit:'mm',format:'a4',compress:true});pdf.addFileToVFS('CareerPilotAI-Regular.ttf',regular.toString('base64'));pdf.addFont('CareerPilotAI-Regular.ttf','CareerPilotAI','normal');pdf.addFileToVFS('CareerPilotAI-Bold.ttf',bold.toString('base64'));pdf.addFont('CareerPilotAI-Bold.ttf','CareerPilotAI','bold');pdf.setProperties({title:'Curriculum Vitae',author:'',creator:'CareerPilotAI'});let y=19;
+ const margin=executive?20:18,width=210-margin*2,navy=[32,54,77],ink=[38,44,53];
+ function setType(size,style,color){pdf.setFont('CareerPilotAI',style);pdf.setFontSize(size);pdf.setTextColor(...color);}
+ function checkGlyphs(text){const font=pdf.getFont();for(const character of text){const code=character.codePointAt(0);if(code>31&&font.metadata?.characterToGlyph&&!font.metadata.characterToGlyph(code))throw Error('The PDF font cannot represent a character in this resume. Configure a font that supports the source characters before approving this CV.');}}
+ let headerEnd=blocks.findIndex(block=>block.kind==='heading');if(headerEnd<0)headerEnd=blocks.length;
+ if(executive){const header=blocks.slice(0,headerEnd);let height=20;const rows=header.map((block,index)=>{const size=index===0?25:9.5,style=index===0?'bold':'normal';setType(size,style,[255,255,255]);checkGlyphs(block.text);const wrapped=pdf.splitTextToSize(block.text,width);height+=wrapped.length*size*.3528*1.3+(index===0?4:1.5);return {size,style,wrapped,source:block.text};});height+=8;if(height>120)throw Error('The resume header is too long. Shorten contact details or professional headline before exporting.');pdf.setFillColor(...navy);pdf.rect(0,0,210,height,'F');y=20;for(const row of rows){setType(row.size,row.style,[255,255,255]);for(const line of row.wrapped){pdf.text(line,margin,y);for(const match of line.matchAll(/https?:\/\/[^\s|]+|[\w.+-]+@[\w.-]+\.[a-z]{2,}/gi)){const prefix=line.slice(0,match.index),token=match[0];pdf.link(margin+pdf.getTextWidth(prefix),y-row.size*.3528,pdf.getTextWidth(token),row.size*.3528*1.3,{url:/^https?:/i.test(token)?((row.source.match(/https?:\/\/[^\s|]+/gi)||[]).find(full=>full.startsWith(token))||token):`mailto:${token}`});}y+=row.size*.3528*1.3;}y+=row.size===25?4:1.5;}y=height+8;}
+ const body=executive?blocks.slice(headerEnd):blocks;
+ for(let blockIndex=0;blockIndex<body.length;blockIndex++){const block=body[blockIndex];
+ if(executive&&block.kind!=='heading'&&blockIndex>0&&['TECHNICAL SKILLS','CORE SKILLS'].includes(body[blockIndex-1].text.toUpperCase())){
+ const skills=[];let cursor=blockIndex;while(cursor<body.length&&body[cursor].kind!=='heading'){skills.push(body[cursor].text.replace(/^[-•*]\s+/,''));cursor++;}
+ setType(bodySize,'normal',ink);const gap=10,columnWidth=(width-gap)/2,lineHeight=bodySize*.3528*1.35;
+ for(let index=0;index<skills.length;index+=2){const pair=skills.slice(index,index+2).map(skill=>{checkGlyphs(skill);return pdf.splitTextToSize(skill,columnWidth-4);}),rowHeight=Math.max(...pair.map(lines=>lines.length))*lineHeight+1.5;
+ if(rowHeight>256)throw Error('A technical skill entry is too long to fit on one page. Shorten or split it before exporting.');if(y+rowHeight>278){pdf.addPage();y=22;}
+ for(let column=0;column<pair.length;column++){const x=margin+column*(columnWidth+gap);pdf.setFillColor(...navy);pdf.circle(x+1,y-1,.55,'F');for(let row=0;row<pair[column].length;row++)pdf.text(pair[column][row],x+4,y+row*lineHeight);}y+=rowHeight;}
+ blockIndex=cursor-1;continue;
+ }
+ if(executive&&block.kind!=='heading'&&blockIndex>0&&body[blockIndex-1].text.toUpperCase()==='TOOLS & TECHNOLOGIES'){
+ const groups=[];let cursor=blockIndex,current=null;
+ while(cursor<body.length&&(body[cursor].kind!=='heading'||(body[cursor].text==='Languages'&&body[cursor+1]?.kind==='bullet'))){const item=body[cursor];if(item.kind==='bullet'){if(!current){current=[];groups.push(current);}current.push({text:item.text.slice(2),bullet:true});}else{current=[{text:item.text,bullet:false}];groups.push(current);}cursor++;}
+ const gap=10,columnWidth=(width-gap)/2,lineHeight=bodySize*.3528*1.22,columnY=[y,y],columnUsed=[false,false];
+ // Pack each column independently so short groups do not inherit the other column's empty space.
+ for(let index=0;index<groups.length;index++){const column=index%2,items=groups[index].map(item=>{setType(bodySize,item.bullet?'normal':'bold',item.bullet?ink:navy);checkGlyphs(item.text);return {...item,lines:pdf.splitTextToSize(item.text,columnWidth-(item.bullet?4:0))};}),groupHeight=items.reduce((height,item)=>height+item.lines.length*lineHeight+.15,0);
+ if(groupHeight>256)throw Error('A tools group is too long to fit on one page. Split it into smaller groups before exporting.');let itemY=columnY[column]+(columnUsed[column]?1.5:0);if(itemY+groupHeight>278){pdf.addPage();columnY[0]=columnY[1]=22;columnUsed[0]=columnUsed[1]=false;itemY=22;}
+ const x=margin+column*(columnWidth+gap);for(const item of items){setType(bodySize,item.bullet?'normal':'bold',item.bullet?ink:navy);if(item.bullet){pdf.setFillColor(...navy);pdf.circle(x+1,itemY-1,.55,'F');}for(const line of item.lines){pdf.text(line,x+(item.bullet?4:0),itemY);itemY+=lineHeight;}itemY+=.15;}columnY[column]=itemY;columnUsed[column]=true;}
+ y=Math.max(...columnY);
+ blockIndex=cursor-1;continue;
+ }
+const size=block.kind==='name'?17:block.kind==='heading'?(executive?10.5:11.5):bodySize,style=block.kind==='name'||block.kind==='heading'||block.kind==='subheading'?'bold':'normal';setType(size,style,executive?(block.kind==='heading'?navy:ink):[32,32,32]);checkGlyphs(block.text);const height=size*.3528*1.35,isBullet=executive&&block.kind==='bullet',indent=isBullet?3:0,wrapped=pdf.splitTextToSize(isBullet?block.text.slice(2):block.text,width-indent),before=block.kind==='heading'?(executive?5:4):0;
+ if(y+before+(block.kind==='heading'?(executive?height+4+bodySize*.3528*1.35:height*2):height)>278){pdf.addPage();y=executive?22:19;}y+=before;
+ if(executive&&block.kind==='heading'){pdf.setDrawColor(208,217,225);pdf.setLineWidth(.25);pdf.line(margin,y+2,210-margin,y+2);}
+ for(let lineIndex=0;lineIndex<wrapped.length;lineIndex++){const line=wrapped[lineIndex];if(y+height>278){pdf.addPage();y=executive?22:19;}if(isBullet&&lineIndex===0){pdf.setFillColor(...navy);pdf.circle(margin+1,y-1,.55,'F');}pdf.text(line,margin+indent,y);y+=height;}y+=block.kind==='heading'&&executive?(block.text.toUpperCase()==='TOOLS & TECHNOLOGIES'?.75:4):compact?1:executive?1.2:1.8;}
+
+ return {bytes:Buffer.from(pdf.output('arraybuffer')),pages:pdf.getNumberOfPages()};
+}
+export async function validatedDocument(text,format,template='classic-uk'){const generated=await generateDocument(text,format,template),extracted=await extractInWorker(generated.bytes,'resume.'+format);if(canonicalText(text)!==canonicalText(extracted.text))throw Error('Document text re-extraction differs from the approved resume. Export was stopped to prevent content loss.');return {...generated,validation:{format,characters:extracted.text.length,pages:generated.pages||extracted.pages.length||null,status:'EXACT_TEXT',diagnostics:extracted.diagnostics}};}

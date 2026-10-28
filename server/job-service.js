@@ -1,3 +1,4 @@
+import {createCareerSearch} from './career-sites.js';
 import {createEmployerDirectory} from './employer-directory.js';
 import {EXTERNAL_EMPLOYERS,UK_EMPLOYERS,boardKey,careerBoardUrl} from './uk-employers.js';
 import {employerBoards,fetchEmployerBoard} from './employer-feeds.js';
@@ -34,7 +35,9 @@ export function createJobService(options={}){
  await Promise.all(Array.from({length:Math.min(3,total)},()=>worker()));rotation=total?(rotation+cursor)%total:0;
  }
  async function refresh(){if(inflight){await inflight;return status();}if(lastRefresh&&+now()-lastRefresh<60000)return status();lastRefresh=+now();inflight=(async()=>{do{refreshAgain=false;await collect();}while(refreshAgain);})();try{await inflight;}finally{inflight=null;}return status();}
+ const careerSearch=createCareerSearch({fetcher,now});
  return {
+ searchCareers:careerSearch.search,
  status,refresh,employers,
  addEmployer:async input=>{const employer=await directory.add(input);lastRefresh=0;if(inflight)refreshAgain=true;return employer;},
  browse:async params=>{const state=activeCatalogue(await catalogue.read());return {...filterCatalogue(state,params,now()),catalogueRevision:state.revision||'empty',catalogueUpdatedAt:state.updatedAt||null};},

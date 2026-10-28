@@ -1,4 +1,4 @@
-# Align — Resume Studio
+# CareerPilotAI
 
 Five-stage resume tailoring with OpenAI-powered analysis and rewriting.
 
@@ -191,8 +191,22 @@ The directory is an expandable curated starting point, not a complete census of 
 
 Cache maintenance: `.data/jobs.json` holds collected vacancies and source refresh summaries; deleting it clears the job catalogue without deleting `.data/employers.json`, browser resume history or application notes. Catalogue reads detect disk deletion/replacement and invalidate the loaded in-memory snapshot. `node_modules/.vite` is a disposable frontend development cache. The UI polls source health every 30 seconds (three seconds during a running background refresh) and reloads current search results when the catalogue revision changes. Employer counts follow the same revision, and search results display the last listing update time. Failed-source metadata updates do not advance that listing update timestamp. Development mode now watches backend module changes; an already-running process from the earlier launcher must be stopped and restarted once to use the watcher.
 
-## CareerPilot AI — Next.js foundation
+## CareerPilotAI — Next.js foundation
 
-The new application lives in [apps/careerpilot](apps/careerpilot/README.md) on port 3100, with PostgreSQL, Prisma, secure OIDC login, owner-scoped private data and the CareerPilot AI shell. The existing app and root commands remain supported. See [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md) for scope, acceptance criteria and verification progress. Install the new package separately before using `npm run careerpilot:dev`; no existing data is automatically moved or deleted.
+The new application lives in [apps/careerpilot-ai](apps/careerpilot-ai/README.md) on port 3100, with PostgreSQL, Prisma, secure OIDC login, owner-scoped private data and the CareerPilotAI shell. The existing app and root commands remain supported. See [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md) for scope, acceptance criteria and verification progress. Install the new package separately before using `npm run careerpilot-ai:dev`; no existing data is automatically moved or deleted.
 
-CareerPilot's expanded job discovery module, provider setup and validation limits are documented in [docs/JOB_DISCOVERY.md](docs/JOB_DISCOVERY.md).
+CareerPilotAI's expanded job discovery module, provider setup and validation limits are documented in [docs/JOB_DISCOVERY.md](docs/JOB_DISCOVERY.md).
+
+## Application naming
+
+The product name is **CareerPilotAI**; npm packages and application folders use `careerpilot-ai`. The Next.js application lives in `apps/careerpilot-ai`. Start it with `npm run careerpilot-ai:dev`; the existing `careerpilot:*` commands remain available. Resume Studio is the resume editing feature within CareerPilotAI. Existing database, volume, cookie and browser storage identifiers are retained to preserve saved data.
+
+The repository checkout can be named `careerpilot-ai` when cloning or moving it; its current outer folder name does not affect the application.
+
+### LinkedIn job search
+
+Select **Search LinkedIn** on either job search screen to open LinkedIn with your current keywords, location (UK by default), date posted, and supported employment type. The full workspace also passes working arrangement. Sign in on LinkedIn in your browser if needed. This is an external search handoff, not an account connection or an import of LinkedIn results. Salary, employer, source and other CareerPilotAI filters are not transferred. LinkedIn controls its results and supported URL filters.
+
+### Direct company career-site search
+
+UK job search now includes Cognizant, Tech Mahindra, NHS Jobs and NTT DATA. Choose **Company career sites**, enter keywords, and press **Search jobs** to retrieve public listings in the backend and show them in the app. No API key is needed. Each source reports its own status; Cognizant currently denies automated access from this development host. The existing employer catalogue remains available under **Search in**. See [career-site collection and verification](docs/CAREER_SITES.md) for source-specific coverage and limits.

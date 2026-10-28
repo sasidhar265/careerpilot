@@ -11,7 +11,7 @@ export async function createDocx(text,keywords=[]){
  keepLines:true,
  ...(b.type==='heading'?{border:{bottom:{color:'888888',style:BorderStyle.SINGLE,size:4,space:4}}}:{}),
  }));
- const doc=new Document({creator:'Align Resume Studio',title:'Tailored Resume',styles:{default:{document:{run:{font:'Calibri',size:22,color:'222222'}}}},numbering:{config:[]},sections:[{properties:{page:{size:{width:11906,height:16838},margin:{top:850,bottom:850,left:1000,right:1000}}},children:paragraphs}]});
+ const doc=new Document({creator:'CareerPilotAI',title:'Tailored Resume',styles:{default:{document:{run:{font:'Calibri',size:22,color:'222222'}}}},numbering:{config:[]},sections:[{properties:{page:{size:{width:11906,height:16838},margin:{top:850,bottom:850,left:1000,right:1000}}},children:paragraphs}]});
  return Packer.toBlob(doc);
 }
 export function createPdf(text,keywords=[]){

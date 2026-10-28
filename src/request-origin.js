@@ -6,7 +6,10 @@ export function authorizedRequestOrigin(request,configuredOrigin,{allowLocalAlia
  let target;try{target=new URL(request.url);}catch{return null;}
  if(request.headers.get('sec-fetch-site')==='cross-site')return null;
  const supplied=request.headers.get('origin');if(!supplied&&requireOrigin)return null;
- const candidate=originUrl(supplied||target.origin);if(!candidate||!originUrl(configuredOrigin))return null;
+ // Next may normalize the URL hostname to localhost; browser GETs omit Origin.
+ // Use the actual Host for those reads, then validate the local scheme and port.
+ const readOrigin=!supplied&&allowLocalAliases&&!requireOrigin&&request.method==='GET'&&request.headers.get('host')?target.protocol+'//'+request.headers.get('host'):target.origin;
+ const candidate=originUrl(supplied||readOrigin);if(!candidate||!originUrl(configuredOrigin))return null;
  if(!allowLocalAliases||!isLocalOriginAlias(configuredOrigin,configuredOrigin))return candidate.origin===configuredOrigin?candidate.origin:null;
  if(!isLocalOriginAlias(candidate.origin,configuredOrigin)||!isLocalOriginAlias(target.origin,configuredOrigin))return null;
  const authority=request.headers.get('host')||target.host;

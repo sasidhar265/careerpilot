@@ -1,10 +1,10 @@
-# CareerPilot AI implementation plan
+# CareerPilotAI implementation plan
 
 ## Repository analysis and preservation
 
 The existing project is a React 19/Vite application, a local Node HTTP API, three AI adapters, PDF/DOCX/OCR processing, resume exports/history, a UK employer registry, a JSON job catalogue and browser-local application notes. These remain supported by their existing root commands. No existing document, browser storage key, environment file or catalogue is migrated/deleted implicitly.
 
-CareerPilot AI lives in `apps/careerpilot`. Its PostgreSQL database is a separate system of record. Legacy catalogue import is explicit, repeatable and non-destructive; private browser data must be intentionally exported/imported by its owner. The new service must not expose the unauthenticated local legacy HTTP server publicly.
+CareerPilotAI lives in `apps/careerpilot-ai`. Its PostgreSQL database is a separate system of record. Legacy catalogue import is explicit, repeatable and non-destructive; private browser data must be intentionally exported/imported by its owner. The new service must not expose the unauthenticated local legacy HTTP server publicly.
 
 ## Boundaries and dependencies
 
@@ -79,7 +79,7 @@ Implemented private AES-GCM original retention, bounded PDF/DOCX worker extracti
 
 Dependencies: installed app dependencies, PostgreSQL, OIDC sessions, a private document encryption keyring; configured AI provider only for optional assistance. Acceptance: exact original byte preservation, uncertain fields block publication, no unsupported AI facts, each correction creates a revision, cross-owner access fails, stale editors receive conflicts, a newer upload never silently replaces the selected baseline. See [candidate module documentation](CANDIDATE_PROFILE.md) for architecture, configuration, limits and release gates.
 
-Progress: implementation complete; 36 native CareerPilot tests and 160 existing regressions pass. Real document extraction and encryption checks execute. Isolated database and browser scenarios are implemented but remain unexecuted with full lint/types/build/migrate because app dependencies cannot be installed (npm DNS ENOTFOUND). Deployment verification remains outstanding.
+Progress: implementation complete; 36 native CareerPilotAI tests and 160 existing regressions pass. Real document extraction and encryption checks execute. Isolated database and browser scenarios are implemented but remain unexecuted with full lint/types/build/migrate because app dependencies cannot be installed (npm DNS ENOTFOUND). Deployment verification remains outstanding.
 
 ## JD analysis and evidence matching engine
 
@@ -150,7 +150,7 @@ Acceptance: distinct forms, real account creation/login, duplicate/invalid crede
 
 ## Guest entry integration fix
 
-Confirmed failure: the landing button linked to a separate 5173 server while only Next/CareerPilot was running. Replaced that dependency with a bundled same-origin `/guest` route and allowlisted in-process `/api/guest/*` handlers. Automatic predev/prebuild guest bundling, standalone asset copying, same-origin HTTP adapter and an actual landing-click browser regression were added. Existing standalone behavior and authentication remain intact. Embedded guest refresh is explicitly manual; provider failures remain real.
+Confirmed failure: the landing button linked to a separate 5173 server while only Next/CareerPilotAI was running. Replaced that dependency with a bundled same-origin `/guest` route and allowlisted in-process `/api/guest/*` handlers. Automatic predev/prebuild guest bundling, standalone asset copying, same-origin HTTP adapter and an actual landing-click browser regression were added. Existing standalone behavior and authentication remain intact. Embedded guest refresh is explicitly manual; provider failures remain real.
 
 Acceptance: one server, real guest HTML/assets/APIs without PostgreSQL/login, no forwarding of private account endpoints, correct origin checks, preserved browser data and no dependency on obsolete URL configuration. Latest native counts are 172 root and 91 app passes; bundle/lint/isolated route types pass. Full browser verification remains subject to sandbox socket restrictions. The first root rerun exposed five harness-import failures; corrected the harness to load the real adapter, then all assertions passed. See updated GUEST_MODE.md.
 

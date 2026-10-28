@@ -1,4 +1,4 @@
-# CareerPilot AI workspace redesign
+# CareerPilotAI workspace redesign
 
 ## Inspection and design direction
 
@@ -8,7 +8,7 @@ The implemented identity uses an ink navy navigation rail, blue interactive acce
 
 ## Shared components and state
 
-- Design tokens live in `apps/careerpilot/src/app/globals.css`. Light/dark/system appearance is controlled at the root, stored locally when available and retained in memory if browser storage is blocked. System mode responds to the OS preference. No external font request is necessary.
+- Design tokens live in `apps/careerpilot-ai/src/app/globals.css`. Light/dark/system appearance is controlled at the root, stored locally when available and retained in memory if browser storage is blocked. System mode responds to the OS preference. No external font request is necessary.
 - AppShell provides active navigation, desktop rail, mobile disclosure menu, Escape handling and logout. The menu closes when a destination is selected. Settings links back to the preserved candidate profile; recommendations retain their existing route.
 - Shared Button, Input, Textarea, Card, Badge, EmptyState and SaveJob components provide consistent actions and surfaces. Forms use labels, visible focus, real error/status feedback and pending states.
 - Workspace loading/error boundaries preserve the shell and provide a real retry action. Reduced-motion preferences disable decorative animation.
@@ -36,8 +36,8 @@ All existing routes remain available. The original Vite app and root data/enviro
 Run the existing migration command before starting the redesigned app:
 
 ```sh
-npm --prefix apps/careerpilot run db:generate
-npm --prefix apps/careerpilot run db:migrate
+npm --prefix apps/careerpilot-ai run db:generate
+npm --prefix apps/careerpilot-ai run db:migrate
 ```
 
 ## Responsive and accessibility validation
@@ -60,7 +60,7 @@ Playwright coverage was extended for theme persistence, 390px mobile navigation 
 
 ## Theme consistency across built-in guest and account pages
 
-The built-in guest workspace retained the older green/DM Sans styling while Next landing/account screens used navy/blue/system typography; guest did not apply the saved CareerPilot appearance preference. This documented mismatch justified a styling-only integration correction. Both now import `src/theme-tokens.css` for palettes, font stack, feedback surfaces, control/card radii and shadows, and use the same pure `src/theme.js` preference store/listener/binding logic. The existing `careerpilot-theme` key is preserved across same-origin navigation and tabs. The guest/local header now includes an appearance selector; unavailable storage retains an in-memory preference.
+The built-in guest workspace retained the older green/DM Sans styling while Next landing/account screens used navy/blue/system typography; guest did not apply the saved CareerPilotAI appearance preference. This documented mismatch justified a styling-only integration correction. Both now import `src/theme-tokens.css` for palettes, font stack, feedback surfaces, control/card radii and shadows, and use the same pure `src/theme.js` preference store/listener/binding logic. The existing `careerpilot-theme` key is preserved across same-origin navigation and tabs. The guest/local header now includes an appearance selector; unavailable storage retains an in-memory preference.
 
 Legacy UI colour literals were replaced with semantic tokens, navigation/sidebar styling and responsive control dimensions aligned, and the separate Google font request removed. Resume paper/ATS typography remains explicitly white/dark and is not recoloured into the UI theme. Data, job sources, authentication and document-generation logic are unchanged. Built guest assets were regenerated.
 
@@ -80,7 +80,7 @@ Verification: lint, focused local-page/shell TypeScript, Next CSS compilation an
 
 The supplied screenshot showed a plain initial instead of the avatar circle, vertically stacked account controls, the native details marker and clipped theme text. The generated global stylesheet contained the rules, so the exact browser delivery/cache cause was not established. Replaced reliance on those global account selectors with component-imported CSS modules for AccountMenu/UserAvatar. Replaced native details/summary with a button-controlled disclosure: no default marker, explicit expanded state, horizontal 44px controls, outside-click/focus-leave dismissal and Escape focus return. Profile links/logout remain real actions and guest visibility rules remain unchanged. Shared avatar variants cover the header, navigation, menu and profile card. Widened the shared desktop appearance control and adjusted small-screen text space.
 
-Verification: lint, focused TypeScript with Next CSS-module ambient types, component browser bundling with emitted CSS and PostCSS compilation pass. The isolated local-account/auth compilation passes with Next Webpack (`CAREERPILOT_CHECK_BUNDLER=webpack npm --prefix apps/careerpilot run test:auth:compile`). Default Turbopack compilation now needs a PostCSS worker port and fails under the sandbox with EPERM; this is not recorded as a pass. Browser binaries are absent and an isolated /tmp headless-browser download failed DNS, so no rendered screenshot verification was performed. Browser regression assertions now check avatar display/dimensions and equal header control alignment rather than just presence of the initial.
+Verification: lint, focused TypeScript with Next CSS-module ambient types, component browser bundling with emitted CSS and PostCSS compilation pass. The isolated local-account/auth compilation passes with Next Webpack (`CAREERPILOT_CHECK_BUNDLER=webpack npm --prefix apps/careerpilot-ai run test:auth:compile`). Default Turbopack compilation now needs a PostCSS worker port and fails under the sandbox with EPERM; this is not recorded as a pass. Browser binaries are absent and an isolated /tmp headless-browser download failed DNS, so no rendered screenshot verification was performed. Browser regression assertions now check avatar display/dimensions and equal header control alignment rather than just presence of the initial.
 
 ### Profile resume import review
 The local profile import uses `ResumeImportReview` with scoped CSS and existing application tokens. Contact and career fields are separated into responsive cards. Short values remain visible; longer sections expand on demand. The section includes selection counts, Select all, Clear selection, extraction notes, full source text and a separate confirmation/action area. Changing selection clears the review confirmation. No import is saved automatically.
